@@ -37,7 +37,7 @@ export class Api {
 
     async getSnapshots() {
         try {
-            const response = await fetch('http://localhost:8787/api/snapshots/month')
+            const response = await fetch('http://localhost:8787/api/snapshots')
             const result = await response.json()
             const snapshots = result.snapshots
             return snapshots

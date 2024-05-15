@@ -31,7 +31,7 @@ async function saveTransaction() {
 
     transactionModalVisible.value = false
 
-    getSnapshots()
+    // getSnapshots()
 }
 
 const tabs = ref([

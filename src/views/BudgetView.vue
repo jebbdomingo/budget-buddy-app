@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, isProxy, toRaw } from 'vue';
 import BaseLayout from '../BaseLayout.vue'
 import { useToast } from 'primevue/usetoast'
 import DataTable from 'primevue/datatable'
@@ -25,10 +25,32 @@ const getSnapshots = () => {
   const oMonth = oDate.getMonth() + 1
   
   const budget_month = oMonth + '-' + oDate.getFullYear()
-  // const budget_month = '4-2024'
-  
-  fetchSnapshots(budget_month)
+
+  const budgets = budget_dates.value
+
+  if (isProxy(budgets)) {
+    const raw = toRaw(budgets)
+
+    // console.log(raw)
+
+    raw.forEach(data => {
+      if (data.month == budget_month) {
+        console.log(data.budgets)
+        snapshots.value = data.budgets
+      }
+    })
+  }
 }
+
+// const getSnapshots = () => {
+//   const oDate = new Date(date.value);
+//   const oMonth = oDate.getMonth() + 1
+  
+//   const budget_month = oMonth + '-' + oDate.getFullYear()
+//   // const budget_month = '4-2024'
+  
+//   fetchSnapshots(budget_month)
+// }
 
 async function fetchSnapshots(budget_month: string) {
   const api = new Api
@@ -40,21 +62,72 @@ async function fetchSnapshots(budget_month: string) {
   }
 }
 
-onMounted(() => {
-  getSnapshots()
-});
+async function buildBudgetSnapshots() {
+  const api = new Api
 
-const snapshots = ref(null)
-const text = ref()
-const count = ref(0)
-const date = ref(new Date())
+  const budgets = await api.getBudgets()
+  const snapshots = await api.getSnapshots()
+  
+  const dates = ['1-2024','2-2024','3-2024','4-2024','5-2024','6-2024','7-2024']
 
-const today = new Date()
-today.setMonth(today.getMonth() + 2)
-const maxDate = ref(today)
+  // Fetch all transaction endings for each budget
+  const endings = {}
+  snapshots.forEach(data => {
+      endings[data.title] = {
+          title: data.title,
+          budget_month: data.budget_month,
+          assigned: data.assigned,
+          available: data.available
+      }
+  });
 
-const formatCurrency = (value) => {
-  return value.toLocaleString('en-US', { style: 'currency', currency: 'PHP' })
+  // Build the budget snapshots data structure
+  const data = []
+  dates.forEach(month => {
+      let oMonths = { month: month, budgets: [] = [] }
+      
+      budgets.forEach(budget => {
+          let oBudgets = {}
+          oBudgets.title = budget.title
+
+          let snaps = {}
+          let hasSnapshot = false
+
+          snapshots.forEach(snapshot => {
+              if (budget.budget_id == snapshot.budget_id && month == snapshot.budget_month) {
+                oBudgets.assigned = snapshot.assigned
+                oBudgets.available = snapshot.available
+                hasSnapshot = true
+                  // snaps = {
+                  //     assigned: snapshot.assigned,
+                  //     available: snapshot.available
+                  // }
+              }
+          })
+          
+          if (!hasSnapshot) {
+              if (endings[budget.title]) {
+                  const oEnding = endings[budget.title]
+
+                  if (oEnding.budget_month != month) {
+                    oEnding.assigned = 0
+                  }
+
+                  oBudgets = oEnding
+              } else {
+                  oBudgets.assigned = 0
+                  oBudgets.available = 0
+              }
+          }
+
+          oMonths.budgets.push(oBudgets)
+      })
+      
+      data.push(oMonths)
+  })
+
+  budget_dates.value = data
+  // console.log(budget_dates.value)
 }
 
 const severity = (value) => {
@@ -69,6 +142,25 @@ const severity = (value) => {
   }
 
   return severity
+}
+
+onMounted(() => {
+  buildBudgetSnapshots()
+  getSnapshots()
+});
+
+const snapshots = ref(null)
+const text = ref()
+const count = ref(0)
+const date = ref(new Date())
+
+const today = new Date()
+today.setMonth(today.getMonth() + 2)
+const maxDate = ref(today)
+const budget_dates = ref(null)
+
+const formatCurrency = (value) => {
+  return value.toLocaleString('en-US', { style: 'currency', currency: 'PHP' })
 }
 </script>
 
