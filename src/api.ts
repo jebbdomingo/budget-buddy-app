@@ -35,12 +35,24 @@ export class Api {
         }
     }
 
-    async getSnapshots() {
+    // async getSnapshots() {
+    //     try {
+    //         const response = await fetch('http://localhost:8787/api/snapshots')
+    //         const result = await response.json()
+    //         const snapshots = result.snapshots
+    //         return snapshots
+    //     } catch (error) {
+    //         console.error(error)
+    //     }
+    // }
+    
+    async getBudgetsBalances() {
         try {
-            const response = await fetch('http://localhost:8787/api/snapshots')
-            const result = await response.json()
-            const snapshots = result.snapshots
-            return snapshots
+            const response = await fetch('http://localhost:8787/api/budgetsbalances')
+            const res = await response.json()
+            const data = res.data
+            
+            return data
         } catch (error) {
             console.error(error)
         }

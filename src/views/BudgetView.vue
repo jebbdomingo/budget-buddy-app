@@ -65,24 +65,11 @@ async function buildBudgetSnapshots() {
   const api = new Api
 
   const budgets = await api.getBudgets()
-  const snapshots = await api.getSnapshots()
+  const balances = await api.getBudgetsBalances()
   
   const dates = ['1-2024','2-2024','3-2024','4-2024','5-2024','6-2024','7-2024']
 
-  // Fetch all transaction endings for each budget
-  const endings = {}
-  snapshots.forEach(data => {
-      endings[data.title] = {
-          title: data.title,
-          budget_month: data.budget_month,
-          assigned: data.assigned,
-          available: data.available
-      }
-
-      // console.log(endings)
-  });
-
-  // Build the budget snapshots data structure
+  // Build the budgets balances data structure
   const data = []
   const lastBudgetMonth = {}
 
@@ -92,36 +79,28 @@ async function buildBudgetSnapshots() {
       budgets.forEach(budget => {
           let oBudgets = {}
           oBudgets.title = budget.title
-          let hasSnapshot = false
+          let hasBudgetBalance = false
 
-          snapshots.forEach(snapshot => {
-              if (budget.budget_id == snapshot.budget_id && month == snapshot.budget_month) {
-                oBudgets.assigned = snapshot.assigned
-                oBudgets.available = snapshot.available
+          balances.forEach(budgetBalance => {
+              if (budget.budget_id == budgetBalance.budget_id && month == budgetBalance.budget_month) {
+                oBudgets.assigned = budgetBalance.assigned
+                oBudgets.available = budgetBalance.available
 
-                hasSnapshot = true
+                hasBudgetBalance = true
 
-                lastBudgetMonth[snapshot.title] = {
-                  title: snapshot.title,
-                  budget_month: snapshot.budget_month,
-                  assigned: snapshot.assigned,
-                  available: snapshot.available
+                lastBudgetMonth[budgetBalance.budget_id] = {
+                  budget_id: budgetBalance.budget_id,
+                  budget_month: budgetBalance.budget_month,
+                  assigned: budgetBalance.assigned,
+                  available: budgetBalance.available
                 }
               }
           })
 
-          if (!hasSnapshot) {
-              // if (endings[budget.title]) {
-              //     const oEnding = endings[budget.title]
-
-              //     if (oEnding.budget_month != month) {
-              //       oEnding.assigned = 0
-              //     }
-
-              //     oBudgets = oEnding
-              if (lastBudgetMonth[budget.title]) {
-                console.log(lastBudgetMonth[budget.title])
-                const oEnding = lastBudgetMonth[budget.title]
+          if (!hasBudgetBalance) {
+              if (lastBudgetMonth[budget.budget_id]) {
+                const oEnding = lastBudgetMonth[budget.budget_id]
+                oEnding.title = budget.title
 
                   if (oEnding.budget_month != month) {
                     oEnding.assigned = 0
