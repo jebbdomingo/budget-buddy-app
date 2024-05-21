@@ -23,9 +23,9 @@ const increaseCount = () => {
 
 const getSnapshots = () => {
   const oDate = new Date(date.value)
-  const oMonth = oDate.getMonth() + 1
+  const month = oDate.getMonth() + 1
   
-  const budget_month = oMonth + '-' + oDate.getFullYear()
+  const budgetMonth = month + '-' + oDate.getFullYear()
 
   const budgets = budget_dates.value
 
@@ -33,50 +33,29 @@ const getSnapshots = () => {
     const raw = toRaw(budgets)
 
     raw.forEach(data => {
-      if (data.month == budget_month) {
-        // console.log(data.budgets)
+      if (data.month == budgetMonth) {
         snapshots.value = data.budgets
       }
     })
   }
 }
 
-// const getSnapshots = () => {
-//   const oDate = new Date(date.value);
-//   const oMonth = oDate.getMonth() + 1
-  
-//   const budget_month = oMonth + '-' + oDate.getFullYear()
-//   // const budget_month = '4-2024'
-  
-//   fetchSnapshots(budget_month)
-// }
-
-// async function fetchSnapshots(budget_month: string) {
-//   const api = new Api
-
-//   if (budget_month) {
-//     snapshots.value = await api.getSnapshotsBy(budget_month)
-//   } else {
-//     snapshots.value = await api.getSnapshots()
-//   }
-// }
-
+/**
+ * Build budgets balances data structure for app presentation
+ */
 async function buildBudgetSnapshots() {
   const api = new Api
-
-  const budgets = await api.getBudgets()
   const balances = await api.getBudgetsBalances()
-  
+
   const dates = ['1-2024','2-2024','3-2024','4-2024','5-2024','6-2024','7-2024']
 
-  // Build the budgets balances data structure
-  const data = []
-  const lastBudgetMonth = {}
+  const data: any = []
+  const lastRunningBalance = {}
 
   dates.forEach(month => {
       let oMonths = { month: month, budgets: [] = [] }
       
-      budgets.forEach(budget => {
+      budgets.value.forEach(budget => {
           let oBudgets = {}
           oBudgets.title = budget.title
           let hasBudgetBalance = false
@@ -88,7 +67,7 @@ async function buildBudgetSnapshots() {
 
                 hasBudgetBalance = true
 
-                lastBudgetMonth[budgetBalance.budget_id] = {
+                lastRunningBalance[budgetBalance.budget_id] = {
                   budget_id: budgetBalance.budget_id,
                   budget_month: budgetBalance.budget_month,
                   assigned: budgetBalance.assigned,
@@ -98,8 +77,8 @@ async function buildBudgetSnapshots() {
           })
 
           if (!hasBudgetBalance) {
-              if (lastBudgetMonth[budget.budget_id]) {
-                const oEnding = lastBudgetMonth[budget.budget_id]
+              if (lastRunningBalance[budget.budget_id]) {
+                const oEnding = lastRunningBalance[budget.budget_id]
                 oEnding.title = budget.title
 
                   if (oEnding.budget_month != month) {
@@ -193,22 +172,22 @@ const transactionDate = ref(new Date())
 
 <BaseLayout>
   <template #header>
-      <div class="card">
-          <Toolbar style="padding: .5rem">
-            <template #start>
-              <Button icon="pi pi-plus" class="mr-2" severity="secondary" @click="transactionModalVisible = true" />
+    <div class="card">
+        <Toolbar style="padding: .5rem">
+          <template #start>
+            <Button icon="pi pi-plus" class="mr-2" severity="secondary" @click="transactionModalVisible = true" />
+          </template>
+  
+            <template #center>
+              <Calendar v-model="date" dateFormat="MM yy" showButtonBar view="month" :maxDate="maxDate" @date-select="getSnapshots" showIcon />
             </template>
-
-              <template #center>
-                <Calendar v-model="date" dateFormat="MM yy" showButtonBar view="month" :maxDate="maxDate" @date-select="getSnapshots" showIcon />
-              </template>
-          </Toolbar>
-      </div>
+        </Toolbar>
+    </div>
   </template>
 
   <template #default>
     <div class="card">
-      <DataTable stripedRows :value="snapshots" scrollable scrollHeight="380px" :virtualScrollerOptions="{ itemSize: 46 }" selectionMode="single">
+      <DataTable stripedRows :value="snapshots" scrollable scrollHeight="400px" :virtualScrollerOptions="{ itemSize: 46 }" selectionMode="single">
           <Column field="title"></Column>
           <Column field="assigned" header="Assigned" headerStyle="width: 7rem; text-align: right" bodyStyle="text-align: right">
             <template #body="slotProps">

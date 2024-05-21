@@ -1,22 +1,13 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref } from 'vue';
 import BaseLayout from './BaseLayout.vue'
 import { RouterLink, RouterView } from 'vue-router'
 import Toast from 'primevue/toast'
-import { useToast } from 'primevue/usetoast'
-
-
-const toast = useToast()
-const transactionModalVisible = ref(false)
 
 const tabs = ref([
     { label: 'Budget', icon: 'pi pi-envelope', route: '/' },
-    { label: 'Accounts', icon: 'pi pi-dollar', route: '/accounts' },
-    { label: 'Transaction', icon: 'pi pi-plus-circle', command: () => {
-        transactionModalVisible.value = true
-    }}
+    { label: 'Accounts', icon: 'pi pi-dollar', route: '/accounts' }
 ])
-
 </script>
 
 <template>
@@ -24,6 +15,10 @@ const tabs = ref([
     <Toast />
 
     <BaseLayout>
+        <template #header>
+            
+        </template>
+
         <template #default>
             <RouterView />
         </template>
