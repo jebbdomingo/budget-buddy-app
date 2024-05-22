@@ -12,141 +12,141 @@ import { Api } from '../api'
 const toast = useToast()
 
 const increaseCount = () => {
-  count.value++
-  
-  if (count.value === 3) {
-    toast.add({severity:'success', summary: 'PrimeVue', detail:'Welcome to PrimeVue + Create Vue', life: 3000})
-    
-    count.value = 0
-  }
+    count.value++
+
+    if (count.value === 3) {
+        toast.add({severity:'success', summary: 'PrimeVue', detail:'Welcome to PrimeVue + Create Vue', life: 3000})
+
+        count.value = 0
+    }
 }
 
 const getSnapshots = () => {
-  const oDate = new Date(date.value)
-  const month = oDate.getMonth() + 1
-  
-  const budgetMonth = month + '-' + oDate.getFullYear()
+    const oDate = new Date(date.value)
+    const month = oDate.getMonth() + 1
 
-  const budgets = budget_dates.value
+    const budgetMonth = month + '-' + oDate.getFullYear()
 
-  if (isProxy(budgets)) {
-    const raw = toRaw(budgets)
+    const budgets = budget_dates.value
 
-    raw.forEach(data => {
-      if (data.month == budgetMonth) {
-        snapshots.value = data.budgets
-      }
-    })
-  }
+    if (isProxy(budgets)) {
+        const raw = toRaw(budgets)
+
+        raw.forEach(data => {
+            if (data.month == budgetMonth) {
+            snapshots.value = data.budgets
+            }
+        })
+    }
 }
 
 /**
  * Build budgets balances data structure for app presentation
  */
 async function buildBudgetSnapshots() {
-  const api = new Api
-  const balances = await api.getBudgetsBalances()
+    const api = new Api
+    const balances = await api.getBudgetsBalances()
 
-  const dates = ['1-2024','2-2024','3-2024','4-2024','5-2024','6-2024','7-2024']
+    const dates = ['1-2024','2-2024','3-2024','4-2024','5-2024','6-2024','7-2024']
 
-  const data: any = []
-  const lastRunningBalance = {}
+    const data: any = []
+    const lastRunningBalance = {}
 
-  dates.forEach(month => {
-      let oMonths = { month: month, budgets: [] = [] }
-      
-      budgets.value.forEach(budget => {
-          let oBudgets = {}
-          oBudgets.title = budget.title
-          let hasBudgetBalance = false
+    dates.forEach(month => {
+        let oMonths = { month: month, budgets: [] = [] }
+        
+        budgets.value.forEach(budget => {
+            let oBudgets = {}
+            oBudgets.title = budget.title
+            let hasBudgetBalance = false
 
-          balances.forEach(budgetBalance => {
-              if (budget.budget_id == budgetBalance.budget_id && month == budgetBalance.budget_month) {
+            balances.forEach(budgetBalance => {
+                if (budget.budget_id == budgetBalance.budget_id && month == budgetBalance.budget_month) {
                 oBudgets.assigned = budgetBalance.assigned
                 oBudgets.available = budgetBalance.available
 
                 hasBudgetBalance = true
 
                 lastRunningBalance[budgetBalance.budget_id] = {
-                  budget_id: budgetBalance.budget_id,
-                  budget_month: budgetBalance.budget_month,
-                  assigned: budgetBalance.assigned,
-                  available: budgetBalance.available
+                    budget_id: budgetBalance.budget_id,
+                    budget_month: budgetBalance.budget_month,
+                    assigned: budgetBalance.assigned,
+                    available: budgetBalance.available
                 }
-              }
-          })
+                }
+            })
 
-          if (!hasBudgetBalance) {
-              if (lastRunningBalance[budget.budget_id]) {
+            if (!hasBudgetBalance) {
+                if (lastRunningBalance[budget.budget_id]) {
                 const oEnding = lastRunningBalance[budget.budget_id]
                 oEnding.title = budget.title
 
-                  if (oEnding.budget_month != month) {
+                    if (oEnding.budget_month != month) {
                     oEnding.assigned = 0
-                  }
+                    }
 
-                  oBudgets = oEnding
-              } else {
-                  oBudgets.assigned = 0
-                  oBudgets.available = 0
-              }
-          }
+                    oBudgets = oEnding
+                } else {
+                    oBudgets.assigned = 0
+                    oBudgets.available = 0
+                }
+            }
 
-          oMonths.budgets.push(oBudgets)
-      })
-      
-      data.push(oMonths)
-  })
+            oMonths.budgets.push(oBudgets)
+        })
+        
+        data.push(oMonths)
+    })
 
-  budget_dates.value = data
+    budget_dates.value = data
 
-  getSnapshots()
+    getSnapshots()
 }
 
 const severity = (value) => {
-  let severity: string = ''
+    let severity: string = ''
 
-  if (value > 0) {
-    severity = 'success'
-  } else if (value < 0) {
-    severity = 'danger'
-  } else {
-    severity = 'secondary'
-  }
+    if (value > 0) {
+        severity = 'success'
+    } else if (value < 0) {
+        severity = 'danger'
+    } else {
+        severity = 'secondary'
+    }
 
-  return severity
+    return severity
 }
 
 const formatCurrency = (value: any) => {
-  return value.toLocaleString('en-US', { style: 'currency', currency: 'PHP' })
+    return value.toLocaleString('en-US', { style: 'currency', currency: 'PHP' })
 }
 
 async function fetchBudgets() {
-  const api = new Api
-  budgets.value = await api.getBudgets()
+    const api = new Api
+    budgets.value = await api.getBudgets()
 }
 
 async function fetchAccounts() {
-  const api = new Api
-  accounts.value = await api.getAccounts()
+    const api = new Api
+    accounts.value = await api.getAccounts()
 }
 
 async function saveTransaction() {
-  const oDate = new Date(transactionDate.value);
-  const oMonth = oDate.getMonth() + 1
-  const budget_month = oMonth + '-' + oDate.getFullYear()
+    const oDate = new Date(transactionDate.value);
+    const oMonth = oDate.getMonth() + 1
+    const budget_month = oMonth + '-' + oDate.getFullYear()
 
-  const api = new Api
-  await api.createTransaction(selectedBudget.value.budget_id, selectedAccount.value.account_id, amount.value, budget_month)
+    const api = new Api
+    await api.createTransaction(selectedBudget.value.budget_id, selectedAccount.value.account_id, amount.value, budget_month)
 
-  transactionModalVisible.value = false
-  buildBudgetSnapshots()
+    transactionModalVisible.value = false
+    buildBudgetSnapshots()
 }
 
 onMounted(() => {
-  fetchBudgets()
-  fetchAccounts()
-  buildBudgetSnapshots()
+    fetchBudgets()
+    fetchAccounts()
+    buildBudgetSnapshots()
 })
 
 const snapshots = ref(null)
@@ -171,76 +171,76 @@ const transactionDate = ref(new Date())
 <template>
 
 <BaseLayout>
-  <template #header>
-    <div class="card">
-        <Toolbar style="padding: .5rem">
-          <template #start>
-            <Button icon="pi pi-plus" class="mr-2" severity="secondary" @click="transactionModalVisible = true" />
-          </template>
-  
-            <template #center>
-              <Calendar v-model="date" dateFormat="MM yy" showButtonBar view="month" :maxDate="maxDate" @date-select="getSnapshots" showIcon />
-            </template>
-        </Toolbar>
-    </div>
-  </template>
+    <template #header>
+        <div class="card">
+            <Toolbar style="padding: .5rem">
+                <template #start>
+                <Button icon="pi pi-plus" class="mr-2" severity="secondary" @click="transactionModalVisible = true" />
+                </template>
 
-  <template #default>
-    <div class="card">
-      <DataTable stripedRows :value="snapshots" scrollable scrollHeight="400px" :virtualScrollerOptions="{ itemSize: 46 }" selectionMode="single">
-          <Column field="title"></Column>
-          <Column field="assigned" header="Assigned" headerStyle="width: 7rem; text-align: right" bodyStyle="text-align: right">
-            <template #body="slotProps">
-              {{ formatCurrency(slotProps.data.assigned) }}
-            </template>
-          </Column>
-          <Column field="available" header="Available" headerStyle="width: 7rem; text-align: right" bodyStyle="text-align: right">
-            <template #body="slotProps">
-              <Tag :value="formatCurrency(slotProps.data.available)" :severity="severity(slotProps.data.available)"></Tag>
-            </template>
-          </Column>
-      </DataTable>
-    </div>
-
-    <!-- <div class="greetings">
-      <Button @click="increaseCount" label="Count"></Button>
-      <h5 class="green">{{ count }}</h5>
-
-      <FloatLabel>
-        <InputText id="txt" v-model="text" />
-        <label for="txt">Text label</label>
-      </FloatLabel>
-    </div> -->
-
-    <template>
-      <div class="card flex flex-wrap gap-3 p-fluid">
-        <Dialog v-model:visible="transactionModalVisible" modal header="Add Transaction" :style="{ width: '25rem' }">
-          <div class="flex align-items-center gap-3 mb-5">
-            <InputGroup>
-              <InputGroupAddon>₱</InputGroupAddon>
-              <InputNumber placeholder="Amount" v-model="amount" inputId="minmaxfraction" :minFractionDigits="2" :maxFractionDigits="5" />
-            </InputGroup>
-          </div>
-          <div class="flex align-items-center gap-3 mb-5">
-            <InputText placeholder="Payee" v-model="payee" class="w-full md:w-14rem" />
-          </div>
-          <div class="flex align-items-center gap-3 mb-5">
-            <Dropdown v-model="selectedBudget" :options="budgets" filter optionLabel="title" placeholder="Budget" class="w-full md:w-14rem" @select="fetchBudgets"></Dropdown>
-          </div>
-          <div class="flex align-items-center gap-3 mb-5">
-            <Dropdown v-model="selectedAccount" :options="accounts" filter optionLabel="title" placeholder="Account" class="w-full md:w-14rem" @select="fetchAccounts"></Dropdown>
-          </div>
-          <div class="flex align-items-center gap-3 mb-5">
-            <Calendar v-model="transactionDate" showButtonBar showIcon class="w-full md:w-14rem" />
-          </div>
-          <div class="flex justify-content-end gap-2">
-            <Button type="button" label="Cancel" severity="secondary" @click="transactionModalVisible = false"></Button>
-            <Button type="button" label="Save" @click="saveTransaction"></Button>
-          </div>
-        </Dialog>
-      </div>
+                <template #center>
+                    <Calendar v-model="date" dateFormat="MM yy" showButtonBar view="month" :maxDate="maxDate" @date-select="getSnapshots" showIcon />
+                </template>
+            </Toolbar>
+        </div>
     </template>
-  </template>
+
+    <template #default>
+        <div class="card">
+            <DataTable stripedRows :value="snapshots" scrollable scrollHeight="400px" :virtualScrollerOptions="{ itemSize: 46 }" selectionMode="single">
+                <Column field="title"></Column>
+                <Column field="assigned" header="Assigned" headerStyle="width: 7rem; text-align: right" bodyStyle="text-align: right">
+                <template #body="slotProps">
+                    {{ formatCurrency(slotProps.data.assigned) }}
+                </template>
+                </Column>
+                <Column field="available" header="Available" headerStyle="width: 7rem; text-align: right" bodyStyle="text-align: right">
+                <template #body="slotProps">
+                    <Tag :value="formatCurrency(slotProps.data.available)" :severity="severity(slotProps.data.available)"></Tag>
+                </template>
+                </Column>
+            </DataTable>
+        </div>
+
+        <!-- <div class="greetings">
+            <Button @click="increaseCount" label="Count"></Button>
+            <h5 class="green">{{ count }}</h5>
+
+            <FloatLabel>
+            <InputText id="txt" v-model="text" />
+            <label for="txt">Text label</label>
+            </FloatLabel>
+        </div> -->
+
+        <template>
+            <div class="card flex flex-wrap gap-3 p-fluid">
+                <Dialog v-model:visible="transactionModalVisible" modal header="Add Transaction" :style="{ width: '25rem' }">
+                    <div class="flex align-items-center gap-3 mb-5">
+                        <InputGroup>
+                            <InputGroupAddon>₱</InputGroupAddon>
+                            <InputNumber placeholder="Amount" v-model="amount" inputId="minmaxfraction" :minFractionDigits="2" :maxFractionDigits="5" />
+                        </InputGroup>
+                    </div>
+                    <div class="flex align-items-center gap-3 mb-5">
+                        <InputText placeholder="Payee" v-model="payee" class="w-full md:w-14rem" />
+                    </div>
+                    <div class="flex align-items-center gap-3 mb-5">
+                        <Dropdown v-model="selectedBudget" :options="budgets" filter optionLabel="title" placeholder="Budget" class="w-full md:w-14rem" @select="fetchBudgets"></Dropdown>
+                    </div>
+                    <div class="flex align-items-center gap-3 mb-5">
+                        <Dropdown v-model="selectedAccount" :options="accounts" filter optionLabel="title" placeholder="Account" class="w-full md:w-14rem" @select="fetchAccounts"></Dropdown>
+                    </div>
+                    <div class="flex align-items-center gap-3 mb-5">
+                        <Calendar v-model="transactionDate" showButtonBar showIcon class="w-full md:w-14rem" />
+                    </div>
+                    <div class="flex justify-content-end gap-2">
+                        <Button type="button" label="Cancel" severity="secondary" @click="transactionModalVisible = false"></Button>
+                        <Button type="button" label="Save" @click="saveTransaction"></Button>
+                    </div>
+                </Dialog>
+            </div>
+        </template>
+    </template>
 
 </BaseLayout>
 
