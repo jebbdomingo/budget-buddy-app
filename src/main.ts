@@ -19,12 +19,14 @@ import InputGroup from 'primevue/inputgroup'
 import InputGroupAddon from 'primevue/inputgroupaddon'
 import InputNumber from 'primevue/inputnumber'
 import Dropdown from 'primevue/dropdown'
+import Sidebar from 'primevue/sidebar'
+import SelectButton from 'primevue/selectbutton'
+import InputSwitch from 'primevue/inputswitch';
+import Calendar from 'primevue/calendar'
+import Dialog from 'primevue/dialog';
 
-import './assets/main.css'
-import 'primevue/resources/themes/aura-light-green/theme.css'
-import 'primevue/resources/primevue.min.css'
-import 'primeicons/primeicons.css';
-import 'primeflex/primeflex.css' 
+
+import '@/assets/styles.scss';
 
 const app = createApp(App)
 
@@ -32,6 +34,7 @@ app.use(createPinia())
 app.use(router)
 app.use(PrimeVue)
 app.use(ToastService)
+app.component('Sidebar', Sidebar);
 app.component('InputText', InputText)
 app.component('Button', Button)
 app.component('FloatLabel', FloatLabel)
@@ -45,5 +48,9 @@ app.component('InputGroup', InputGroup)
 app.component('InputGroupAddon', InputGroupAddon)
 app.component('InputNumber', InputNumber)
 app.component('Dropdown', Dropdown)
+app.component('SelectButton', SelectButton)
+app.component('InputSwitch', InputSwitch)
+app.component('Calendar', Calendar)
+app.component('Dialog', Dialog)
 
 app.mount('#app')

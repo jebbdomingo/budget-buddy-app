@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import AppLayout from '@/layout/AppLayout.vue'
 import BudgetView from '../views/BudgetView.vue'
 
 const router = createRouter({
@@ -6,17 +7,23 @@ const router = createRouter({
   routes: [
     {
       path: '/',
-      name: 'budget',
-      component: BudgetView
+      component: AppLayout,
+      children: [
+        {
+            path: '/',
+            name: 'budget',
+            component: BudgetView
+        },
+        {
+          path: '/accounts',
+          name: 'accounts',
+          // route level code-splitting
+          // this generates a separate chunk (Accounts.[hash].js) for this route
+          // which is lazy-loaded when the route is visited.
+          component: () => import('@/views/AccountsView.vue')
+        }
+      ]
     },
-    {
-      path: '/accounts',
-      name: 'accounts',
-      // route level code-splitting
-      // this generates a separate chunk (About.[hash].js) for this route
-      // which is lazy-loaded when the route is visited.
-      component: () => import('../views/AboutView.vue')
-    }
   ]
 })
 
