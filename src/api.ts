@@ -18,8 +18,23 @@ export class Api {
             console.error(error)
         }
     }
+    
+    async getAccountBalances() {
+        try {
+            const response = await fetch('http://localhost:8787/api/accountbalances')
+            const result = await response.json()
+            return result.accounts
+        } catch (error) {
+            console.error(error)
+        }
+    }
 
-    async createTransaction(budget_id: number, account_id: number, amount: number, budget_month: string) {
+    async createTransaction(
+        budget_id: number,
+        account_id: number,
+        amount: number,
+        budget_month: string
+    ) {
         try {
             const options = {
                 method: "POST",

@@ -1,13 +1,21 @@
 <script setup lang="ts">
-import { ref, onMounted, isProxy, toRaw } from 'vue';
-import BaseLayout from '../BaseLayout.vue'
+import { ref, onMounted, isProxy, toRaw, watch } from 'vue';
 import { useToast } from 'primevue/usetoast'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
-import Calendar from 'primevue/calendar'
-import Dialog from 'primevue/dialog';
 import Tag from 'primevue/tag'
 import { Api } from '../api'
+
+import { state } from '@/stores/state'
+const { isNewTransaction, onResetTransaction } = state()
+
+watch(isNewTransaction, (txn) => {
+    if (txn) {
+        updateSnapshot(txn)
+        // buildBudgetSnapshots()
+        // onResetTransaction()
+    }
+})
 
 const toast = useToast()
 
@@ -21,23 +29,75 @@ const increaseCount = () => {
     }
 }
 
+const updateSnapshot = async (txn: {}) => {
+    let snaps
+    // snapshots.value = []
+
+    if (snaps = fetchSnapshots()) {
+        const snapshot = {
+            id: txn.budget_id,
+            title: null,
+            assigned: 0,
+            available: 0
+        }
+
+        snaps.forEach(snap => {
+            if (snap.month == txn.budget_month) {
+                snap.budgets.forEach(data => {
+                    if (data.id == txn.budget_id) {
+                        snapshot.title = data.title
+                        snapshot.assigned = data.assigned + txn.amount
+                        snapshot.available = data.available + txn.amount
+                    }
+                });
+
+                // snapshots.value[1] = null
+                // snapshots.value = snap.budgets
+            }
+        })
+
+        snapshots.value[findIndexById(snapshot.id)] = snapshot
+    }
+}
+
+const fetchSnapshots = () => {
+    const budgets = budgetSnapshots.value
+    let result = null
+
+    if (isProxy(budgets)) {
+        result = toRaw(budgets)
+    }
+
+    return result
+}
+
 const getSnapshots = () => {
     const oDate = new Date(date.value)
     const month = oDate.getMonth() + 1
 
     const budgetMonth = month + '-' + oDate.getFullYear()
 
-    const budgets = budget_dates.value
-
-    if (isProxy(budgets)) {
-        const raw = toRaw(budgets)
-
-        raw.forEach(data => {
+    let snaps: []
+    if (snaps = fetchSnapshots()) {
+        snaps.forEach(data => {
             if (data.month == budgetMonth) {
-            snapshots.value = data.budgets
+                snapshots.value = data.budgets
             }
-        })
+        });
     }
+
+    console.log(snapshots.value)
+}
+
+const findIndexById = (id) => {
+    let index = -1;
+    for (let i = 0; i < snapshots.value.length; i++) {
+        if (snapshots.value[i].id === id) {
+            index = i;
+            break;
+        }
+    }
+    return index;
 }
 
 /**
@@ -57,6 +117,7 @@ async function buildBudgetSnapshots() {
         
         budgets.value.forEach(budget => {
             let oBudgets = {}
+            oBudgets.id = budget.budget_id
             oBudgets.title = budget.title
             let hasBudgetBalance = false
 
@@ -98,7 +159,7 @@ async function buildBudgetSnapshots() {
         data.push(oMonths)
     })
 
-    budget_dates.value = data
+    budgetSnapshots.value = data
 
     getSnapshots()
 }
@@ -150,14 +211,14 @@ onMounted(() => {
 })
 
 const snapshots = ref(null)
-const text = ref()
 const count = ref(0)
 const date = ref(new Date())
 
+const dt = ref(null);
 const today = new Date()
 today.setMonth(today.getMonth() + 2)
 const maxDate = ref(today)
-const budget_dates = ref(null)
+const budgetSnapshots = ref(null)
 const transactionModalVisible = ref(false)
 const selectedBudget = ref()
 const selectedAccount = ref()
@@ -170,78 +231,77 @@ const transactionDate = ref(new Date())
 
 <template>
 
-<BaseLayout>
-    <template #header>
-        <div class="card">
-            <Toolbar style="padding: .5rem">
-                <template #start>
-                <Button icon="pi pi-plus" class="mr-2" severity="secondary" @click="transactionModalVisible = true" />
-                </template>
+    <div class="grid">
+        <div class="col-12">
+            <div class="card">
+                <Toolbar class="mb-4">
+                    <template v-slot:start>
+                        <div class="my-2">
+                            <Button label="New budget" icon="pi pi-plus" class="mr-2" severity="success" @click="transactionModalVisible = true" />
+                        </div>
+                    </template>
+                </Toolbar>
 
-                <template #center>
-                    <Calendar v-model="date" dateFormat="MM yy" showButtonBar view="month" :maxDate="maxDate" @date-select="getSnapshots" showIcon />
-                </template>
-            </Toolbar>
-        </div>
-    </template>
-
-    <template #default>
-        <div class="card">
-            <DataTable stripedRows :value="snapshots" scrollable scrollHeight="400px" :virtualScrollerOptions="{ itemSize: 46 }" selectionMode="single">
-                <Column field="title"></Column>
-                <Column field="assigned" header="Assigned" headerStyle="width: 7rem; text-align: right" bodyStyle="text-align: right">
-                <template #body="slotProps">
-                    {{ formatCurrency(slotProps.data.assigned) }}
-                </template>
-                </Column>
-                <Column field="available" header="Available" headerStyle="width: 7rem; text-align: right" bodyStyle="text-align: right">
-                <template #body="slotProps">
-                    <Tag :value="formatCurrency(slotProps.data.available)" :severity="severity(slotProps.data.available)"></Tag>
-                </template>
-                </Column>
-            </DataTable>
-        </div>
-
-        <!-- <div class="greetings">
-            <Button @click="increaseCount" label="Count"></Button>
-            <h5 class="green">{{ count }}</h5>
-
-            <FloatLabel>
-            <InputText id="txt" v-model="text" />
-            <label for="txt">Text label</label>
-            </FloatLabel>
-        </div> -->
-
-        <template>
-            <div class="card flex flex-wrap gap-3 p-fluid">
-                <Dialog v-model:visible="transactionModalVisible" modal header="Add Transaction" :style="{ width: '25rem' }">
-                    <div class="flex align-items-center gap-3 mb-5">
-                        <InputGroup>
-                            <InputGroupAddon>₱</InputGroupAddon>
-                            <InputNumber placeholder="Amount" v-model="amount" inputId="minmaxfraction" :minFractionDigits="2" :maxFractionDigits="5" />
-                        </InputGroup>
-                    </div>
-                    <div class="flex align-items-center gap-3 mb-5">
-                        <InputText placeholder="Payee" v-model="payee" class="w-full md:w-14rem" />
-                    </div>
-                    <div class="flex align-items-center gap-3 mb-5">
-                        <Dropdown v-model="selectedBudget" :options="budgets" filter optionLabel="title" placeholder="Budget" class="w-full md:w-14rem" @select="fetchBudgets"></Dropdown>
-                    </div>
-                    <div class="flex align-items-center gap-3 mb-5">
-                        <Dropdown v-model="selectedAccount" :options="accounts" filter optionLabel="title" placeholder="Account" class="w-full md:w-14rem" @select="fetchAccounts"></Dropdown>
-                    </div>
-                    <div class="flex align-items-center gap-3 mb-5">
-                        <Calendar v-model="transactionDate" showButtonBar showIcon class="w-full md:w-14rem" />
-                    </div>
-                    <div class="flex justify-content-end gap-2">
-                        <Button type="button" label="Cancel" severity="secondary" @click="transactionModalVisible = false"></Button>
-                        <Button type="button" label="Save" @click="saveTransaction"></Button>
-                    </div>
-                </Dialog>
+                <DataTable ref="dt" stripedRows :value="snapshots">
+                    <template #header>
+                        <div class="flex flex-column md:flex-row md:justify-content-between md:align-items-center">
+                            <h5 class="m-0">Budgets</h5>
+                            <Calendar v-model="date" dateFormat="MM yy" showButtonBar view="month" :maxDate="maxDate" @date-select="getSnapshots" showIcon />
+                        </div>
+                    </template>
+                    <Column field="title" header="Category"></Column>
+                    <Column field="assigned" header="Assigned" headerStyle="width: 7rem; text-align: right" bodyStyle="text-align: right">
+                    <template #body="slotProps">
+                        {{ formatCurrency(slotProps.data.assigned) }}
+                    </template>
+                    </Column>
+                    <Column field="available" header="Available" headerStyle="width: 7rem; text-align: right" bodyStyle="text-align: right">
+                    <template #body="slotProps">
+                        <Tag :value="formatCurrency(slotProps.data.available)" :severity="severity(slotProps.data.available)"></Tag>
+                    </template>
+                    </Column>
+                </DataTable>
             </div>
-        </template>
-    </template>
+        </div>
+    </div>
 
-</BaseLayout>
+    <!-- <div class="greetings">
+        <Button @click="increaseCount" label="Count"></Button>
+        <h5 class="green">{{ count }}</h5>
+
+        <FloatLabel>
+        <InputText id="txt" v-model="text" />
+        <label for="txt">Text label</label>
+        </FloatLabel>
+    </div> -->
+
+    <template>
+        <div class="card flex flex-wrap gap-3 p-fluid">
+            <Dialog v-model:visible="transactionModalVisible" modal header="Add Transaction" :style="{ width: '25rem' }">
+                <div class="flex align-items-center gap-3 mb-5">
+                    <InputGroup>
+                        <InputGroupAddon>₱</InputGroupAddon>
+                        <InputNumber placeholder="Amount" v-model="amount" inputId="minmaxfraction" :minFractionDigits="2" :maxFractionDigits="5" />
+                    </InputGroup>
+                </div>
+                <div class="flex align-items-center gap-3 mb-5">
+                    <InputText placeholder="Payee" v-model="payee" class="w-full md:w-14rem" />
+                </div>
+                <div class="flex align-items-center gap-3 mb-5">
+                    <Dropdown v-model="selectedBudget" :options="budgets" filter optionLabel="title" placeholder="Budget" class="w-full md:w-14rem" @select="fetchBudgets"></Dropdown>
+                </div>
+                <div class="flex align-items-center gap-3 mb-5">
+                    <Dropdown v-model="selectedAccount" :options="accounts" filter optionLabel="title" placeholder="Account" class="w-full md:w-14rem" @select="fetchAccounts"></Dropdown>
+                </div>
+                <div class="flex align-items-center gap-3 mb-5">
+                    <Calendar v-model="transactionDate" showButtonBar showIcon class="w-full md:w-14rem" />
+                </div>
+                <div class="flex justify-content-end gap-2">
+                    <Button type="button" label="Cancel" severity="secondary" @click="transactionModalVisible = false"></Button>
+                    <Button type="button" label="Save" @click="saveTransaction"></Button>
+                </div>
+            </Dialog>
+        </div>
+    </template>
 
 </template>
