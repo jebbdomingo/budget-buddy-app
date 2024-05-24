@@ -7,33 +7,20 @@ import Tag from 'primevue/tag'
 import { Api } from '../api'
 
 import { state } from '@/stores/state'
-const { isNewTransaction, onResetTransaction } = state()
+const { isNewTransaction } = state()
 
 watch(isNewTransaction, (txn) => {
     if (txn) {
         updateSnapshot(txn)
-        // buildBudgetSnapshots()
-        // onResetTransaction()
     }
 })
 
 const toast = useToast()
 
-const increaseCount = () => {
-    count.value++
-
-    if (count.value === 3) {
-        toast.add({severity:'success', summary: 'PrimeVue', detail:'Welcome to PrimeVue + Create Vue', life: 3000})
-
-        count.value = 0
-    }
-}
-
 const updateSnapshot = async (txn: {}) => {
-    let snaps
-    // snapshots.value = []
+    const result = fetchSnapshots()
 
-    if (snaps = fetchSnapshots()) {
+    if (result) {
         const snapshot = {
             id: txn.budget_id,
             title: null,
@@ -41,34 +28,24 @@ const updateSnapshot = async (txn: {}) => {
             available: 0
         }
 
-        snaps.forEach(snap => {
-            if (snap.month == txn.budget_month) {
-                snap.budgets.forEach(data => {
-                    if (data.id == txn.budget_id) {
-                        snapshot.title = data.title
-                        snapshot.assigned = data.assigned + txn.amount
-                        snapshot.available = data.available + txn.amount
+        result.forEach(row => {
+            if (row.month == txn.budget_month) {
+                row.budgets.forEach((budget, index) => {
+                    if (budget.id == txn.budget_id) {
+                        snapshot.title = budget.title
+                        snapshot.assigned = budget.assigned + txn.amount
+                        snapshot.available = budget.available + txn.amount
+
+                        row.budgets[index] = snapshot
                     }
                 });
-
-                // snapshots.value[1] = null
-                // snapshots.value = snap.budgets
             }
         })
-
-        snapshots.value[findIndexById(snapshot.id)] = snapshot
     }
 }
 
 const fetchSnapshots = () => {
-    const budgets = budgetSnapshots.value
-    let result = null
-
-    if (isProxy(budgets)) {
-        result = toRaw(budgets)
-    }
-
-    return result
+    return budgetSnapshots.value
 }
 
 const getSnapshots = () => {
@@ -85,8 +62,6 @@ const getSnapshots = () => {
             }
         });
     }
-
-    console.log(snapshots.value)
 }
 
 const findIndexById = (id) => {
@@ -160,6 +135,8 @@ async function buildBudgetSnapshots() {
     })
 
     budgetSnapshots.value = data
+
+    console.log(budgetSnapshots.value)
 
     getSnapshots()
 }

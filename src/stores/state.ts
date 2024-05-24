@@ -6,15 +6,11 @@ const config = reactive({
 
 export function state() {
 
-    const onNewTransaction = (txn: {}) => {
+    const newTransaction = (txn: {}) => {
         config.newTransaction = txn
-    }
-    
-    const onResetTransaction = () => {
-        config.newTransaction = {}
     }
 
     const isNewTransaction = computed(() => config.newTransaction)
 
-    return { config: toRefs(config), onNewTransaction, onResetTransaction, isNewTransaction }
+    return { config: toRefs(config), newTransaction, isNewTransaction }
 }

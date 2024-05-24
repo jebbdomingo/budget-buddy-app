@@ -4,7 +4,7 @@ import { Api } from '../api'
 import AppMenuItem from './AppMenuItem.vue';
 
 import { state } from '@/stores/state'
-const { config, onNewTransaction } = state()
+const { newTransaction } = state()
 
 async function fetchBudgets() {
     const api = new Api
@@ -25,7 +25,8 @@ async function saveTransaction() {
     await api.createTransaction(selectedBudget.value.budget_id, selectedAccount.value.account_id, amount.value, budget_month)
 
     transactionModalVisible.value = false
-    onNewTransaction({
+
+    newTransaction({
         budget_id: selectedBudget.value.budget_id,
         budget_month: budget_month,
         amount: amount.value
