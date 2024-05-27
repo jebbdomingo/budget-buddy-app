@@ -11,34 +11,45 @@ const { isNewTransaction } = state()
 
 watch(isNewTransaction, (txn) => {
     if (txn) {
-        updateSnapshot(txn)
+        recalculateBudgetSnapshots(txn)
     }
 })
 
 const toast = useToast()
 
-const updateSnapshot = async (txn: {}) => {
+/**
+ * Dynamically re-calculate all the budget snapshots for presentation
+ */
+const recalculateBudgetSnapshots = async (txn: {}) => {
     const result = fetchSnapshots()
 
     if (result) {
-        const snapshot = {
-            id: txn.budget_id,
-            title: null,
-            assigned: 0,
-            available: 0
-        }
-
         result.forEach(row => {
+            const snapshot = {
+                budget_id: txn.budget_id,
+                title: null,
+                assigned: 0,
+                available: 0
+            }
+            
             if (row.month == txn.budget_month) {
                 row.budgets.forEach((budget, index) => {
-                    if (budget.id == txn.budget_id) {
+                    if (budget.budget_id == txn.budget_id) {
                         snapshot.title = budget.title
                         snapshot.assigned = budget.assigned + txn.amount
                         snapshot.available = budget.available + txn.amount
-
                         row.budgets[index] = snapshot
                     }
-                });
+                })
+            } else if (row.month > txn.budget_month) {
+                row.budgets.forEach((budget, index) => {
+                    if (budget.budget_id == txn.budget_id) {
+                        snapshot.title = budget.title
+                        snapshot.assigned = budget.assigned
+                        snapshot.available = budget.available + txn.amount
+                        row.budgets[index] = snapshot
+                    }
+                })
             }
         })
     }
@@ -64,17 +75,6 @@ const getSnapshots = () => {
     }
 }
 
-const findIndexById = (id) => {
-    let index = -1;
-    for (let i = 0; i < snapshots.value.length; i++) {
-        if (snapshots.value[i].id === id) {
-            index = i;
-            break;
-        }
-    }
-    return index;
-}
-
 /**
  * Build budgets balances data structure for app presentation
  */
@@ -82,7 +82,15 @@ async function buildBudgetSnapshots() {
     const api = new Api
     const balances = await api.getBudgetsBalances()
 
-    const dates = ['1-2024','2-2024','3-2024','4-2024','5-2024','6-2024','7-2024']
+    const oDate = new Date(date.value)
+    const month = oDate.getMonth() + 1
+    const year = oDate.getFullYear()
+
+    const dates: [string] = []
+
+    for (let i = 1; i <= (month + 2); i++) {
+        dates.push(i + '-' + year)
+    }
 
     const data: any = []
     const lastRunningBalance = {}
@@ -92,33 +100,35 @@ async function buildBudgetSnapshots() {
         
         budgets.value.forEach(budget => {
             let oBudgets = {}
-            oBudgets.id = budget.budget_id
+            oBudgets.budget_id = budget.budget_id
             oBudgets.title = budget.title
+
             let hasBudgetBalance = false
 
             balances.forEach(budgetBalance => {
                 if (budget.budget_id == budgetBalance.budget_id && month == budgetBalance.budget_month) {
-                oBudgets.assigned = budgetBalance.assigned
-                oBudgets.available = budgetBalance.available
+                    oBudgets.assigned = budgetBalance.assigned
+                    oBudgets.available = budgetBalance.available
 
-                hasBudgetBalance = true
+                    hasBudgetBalance = true
 
-                lastRunningBalance[budgetBalance.budget_id] = {
-                    budget_id: budgetBalance.budget_id,
-                    budget_month: budgetBalance.budget_month,
-                    assigned: budgetBalance.assigned,
-                    available: budgetBalance.available
-                }
+                    // Use to track the last known balance of a budget
+                    lastRunningBalance[budgetBalance.budget_id] = {
+                        budget_id: budgetBalance.budget_id,
+                        title: budget.title,
+                        budget_month: budgetBalance.budget_month,
+                        assigned: budgetBalance.assigned,
+                        available: budgetBalance.available
+                    }
                 }
             })
 
             if (!hasBudgetBalance) {
                 if (lastRunningBalance[budget.budget_id]) {
-                const oEnding = lastRunningBalance[budget.budget_id]
-                oEnding.title = budget.title
+                    const oEnding = lastRunningBalance[budget.budget_id]
 
                     if (oEnding.budget_month != month) {
-                    oEnding.assigned = 0
+                        oEnding.assigned = 0
                     }
 
                     oBudgets = oEnding
@@ -135,8 +145,6 @@ async function buildBudgetSnapshots() {
     })
 
     budgetSnapshots.value = data
-
-    console.log(budgetSnapshots.value)
 
     getSnapshots()
 }
