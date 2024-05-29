@@ -79,16 +79,16 @@ const transactionDate = ref(new Date())
                     </InputGroup>
                 </div>
                 <div class="flex align-items-center gap-3 mb-5">
-                    <InputText placeholder="Payee" v-model="payee" class="w-full md:w-14rem" />
+                    <InputText placeholder="Payee" v-model="payee" class="w-full" />
                 </div>
                 <div class="flex align-items-center gap-3 mb-5">
-                    <Dropdown v-model="selectedBudget" :options="budgets" filter optionLabel="title" placeholder="Budget" class="w-full md:w-14rem" @select="fetchBudgets"></Dropdown>
+                    <Dropdown v-model="selectedBudget" :options="budgets" filter optionLabel="title" placeholder="Budget" class="w-full" @select="fetchBudgets"></Dropdown>
                 </div>
                 <div class="flex align-items-center gap-3 mb-5">
-                    <Dropdown v-model="selectedAccount" :options="accounts" filter optionLabel="title" placeholder="Account" class="w-full md:w-14rem" @select="fetchAccounts"></Dropdown>
+                    <Dropdown v-model="selectedAccount" :options="accounts" filter optionLabel="title" placeholder="Account" class="w-full" @select="fetchAccounts"></Dropdown>
                 </div>
                 <div class="flex align-items-center gap-3 mb-5">
-                    <Calendar v-model="transactionDate" showButtonBar showIcon class="w-full md:w-14rem" />
+                    <Calendar v-model="transactionDate" showButtonBar showIcon class="w-full" />
                 </div>
                 <div class="flex justify-content-end gap-2">
                     <Button type="button" label="Cancel" severity="secondary" @click="transactionModalVisible = false"></Button>

@@ -49,6 +49,21 @@ export class Api {
             console.error(error)
         }
     }
+    
+    async createBudget(title: string) {
+        try {
+            const options = {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ title: title })
+            }
+            
+            fetch("http://localhost:8787/api/budgets", options)
+                .then(response => response.json())
+        } catch (error) {
+            console.error(error)
+        }
+    }
 
     // async getSnapshots() {
     //     try {
