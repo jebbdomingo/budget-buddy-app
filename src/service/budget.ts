@@ -169,7 +169,7 @@ export function useSnapshotSelector(date, snapshot) {
 
 export async function useOnBudgetSave(title: string) {
     const api = new Api
-    // await api.createBudget(title)
+    await api.createBudget(title)
 
     const result = oBudgets.value
 
