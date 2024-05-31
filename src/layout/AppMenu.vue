@@ -3,13 +3,7 @@ import { ref, onMounted } from 'vue';
 import { Api } from '../api'
 import AppMenuItem from './AppMenuItem.vue';
 
-import { state } from '@/stores/state'
-const { newTransaction } = state()
-
-async function fetchBudgets() {
-    const api = new Api
-    budgets.value = await api.getBudgets()
-}
+import { oBudgets, useRecalculateSnapshots } from '../service/budget'
 
 async function fetchAccounts() {
     const api = new Api
@@ -22,11 +16,16 @@ async function saveTransaction() {
     const budget_month = oMonth + '-' + oDate.getFullYear()
 
     const api = new Api
-    await api.createTransaction(selectedBudget.value.budget_id, selectedAccount.value.account_id, amount.value, budget_month)
+    await api.createTransaction(
+        selectedBudget.value.budget_id,
+        selectedAccount.value.account_id,
+        amount.value,
+        budget_month
+    )
 
     transactionModalVisible.value = false
 
-    newTransaction({
+    useRecalculateSnapshots({
         budget_id: selectedBudget.value.budget_id,
         budget_month: budget_month,
         amount: amount.value
@@ -34,7 +33,6 @@ async function saveTransaction() {
 }
 
 onMounted(() => {
-    fetchBudgets()
     fetchAccounts()
 })
 
@@ -56,7 +54,7 @@ const selectedBudget = ref()
 const selectedAccount = ref()
 const payee = ref()
 const amount = ref()
-const budgets = ref()
+// const budgets = ref()
 const accounts = ref()
 const transactionDate = ref(new Date())
 </script>
@@ -82,13 +80,13 @@ const transactionDate = ref(new Date())
                     <InputText placeholder="Payee" v-model="payee" class="w-full" />
                 </div>
                 <div class="flex align-items-center gap-3 mb-5">
-                    <Dropdown v-model="selectedBudget" :options="budgets" filter optionLabel="title" placeholder="Budget" class="w-full" @select="fetchBudgets"></Dropdown>
+                    <Dropdown v-model="selectedBudget" :options="oBudgets" filter optionLabel="title" placeholder="Budget" class="w-full"></Dropdown>
                 </div>
                 <div class="flex align-items-center gap-3 mb-5">
                     <Dropdown v-model="selectedAccount" :options="accounts" filter optionLabel="title" placeholder="Account" class="w-full" @select="fetchAccounts"></Dropdown>
                 </div>
                 <div class="flex align-items-center gap-3 mb-5">
-                    <Calendar v-model="transactionDate" showButtonBar showIcon class="w-full" />
+                    <Calendar v-model="transactionDate" showButtonBar showIcon class="w-full" :manualInput="false" />
                 </div>
                 <div class="flex justify-content-end gap-2">
                     <Button type="button" label="Cancel" severity="secondary" @click="transactionModalVisible = false"></Button>

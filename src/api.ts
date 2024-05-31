@@ -42,9 +42,9 @@ export class Api {
                 body: JSON.stringify({ budget_id: budget_id, account_id: account_id, amount: amount, budget_month: budget_month })
             }
             
-            fetch("http://localhost:8787/api/fund_allocation", options)
-                .then(response => response.json())
-                // .then(data => (this.postId = data.id))
+            const response = await fetch("http://localhost:8787/api/fund_allocation", options)
+            const result = await response.json()
+            return result.ok
         } catch (error) {
             console.error(error)
         }
@@ -58,8 +58,9 @@ export class Api {
                 body: JSON.stringify({ title: title })
             }
             
-            fetch("http://localhost:8787/api/budgets", options)
-                .then(response => response.json())
+            const response = await fetch("http://localhost:8787/api/budgets", options)
+            const result = await response.json()
+            return result.budget
         } catch (error) {
             console.error(error)
         }

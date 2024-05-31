@@ -3,16 +3,8 @@ import { ref, onMounted, watch } from 'vue';
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import Tag from 'primevue/tag'
-import { useSnapshotGenerator, useRecalculateSnapshots, useSnapshotSelector, useOnBudgetSave } from '../service/budget'
-
-import { state } from '@/stores/state'
-const { isNewTransaction } = state()
-
-watch(isNewTransaction, (transaction) => {
-    if (transaction) {
-        useRecalculateSnapshots(transaction)
-    }
-})
+import { useSnapshotSelector, snapshot, oBudgets } from '../service/budget'
+import { Api } from '../api'
 
 const severity = (value) => {
     let severity: string = ''
@@ -33,23 +25,29 @@ const formatCurrency = (value: any) => {
 }
 
 async function saveBudget() {
-    useOnBudgetSave(budgetTitle.value)
+    const api = new Api
+    const res = await api.createBudget(budgetTitle.value)
+
+    const budgets = oBudgets.value
+
+    budgets.push({
+        budget_id: res.budget_id ?? 0,
+        title: budgetTitle.value,
+        date_created: null,
+        date_modified: null
+    })
+
     newBudgetModalVisible.value = false
 }
 
-async function generateSnapshots() {
-    useSnapshotGenerator(date)
-    useSnapshotSelector(date, snapshot)
-}
-
 onMounted(() => {
-    generateSnapshots()
+    useSnapshotSelector(date)
 })
 
-const snapshot = ref(null)
+// const snapshot = ref(null)
 const date = ref(new Date())
 
-const dt = ref(null);
+const dt = ref(null)
 const today = new Date()
 today.setMonth(today.getMonth() + 2)
 const maxDate = ref(today)

@@ -1,35 +1,35 @@
-import { toValue, watchEffect, ref, onMounted, watch } from 'vue'
+import { toValue, watchEffect, ref, watch } from 'vue'
 import { Api } from '../api'
 
-const oBudgetSnapshots = ref(null)
-const oBudgets = ref(null)
+export const oBudgetSnapshots = ref(null)
+export const oBudgets = ref(null)
+export const snapshot = ref(null)
 
 /**
  * Generate budgets balances data structure for app presentation
- * 
- * @param date The date from which we generate the past months and the two future months of budgeting
  */
-export async function useSnapshotGenerator(date: any) {
+export async function useSnapshotGenerator() {
     const api = new Api
 
     oBudgets.value = JSON.parse(localStorage.getItem('BudgetView:Budgets')) || null
+    oBudgetSnapshots.value = JSON.parse(localStorage.getItem('BudgetView:Snapshots')) || null
     let balances = JSON.parse(localStorage.getItem('BudgetView:Balances')) || null
     
-    if (!toValue(oBudgets)) {
+    if (!toValue(oBudgetSnapshots)) {
         oBudgets.value = await api.getBudgets()
-        localStorage.setItem('BudgetView:Budgets', JSON.stringify(toValue(oBudgets)))
-    }
-    
-    if (!balances) {    
         balances = await api.getBudgetsBalances()
+
+        localStorage.setItem('BudgetView:Budgets', JSON.stringify(toValue(oBudgets)))
         localStorage.setItem('BudgetView:Balances', JSON.stringify(balances))
     }
     
     const generate = () => {
+        console.log('useSnapshotGenerator::generate()')
+
         // Generate past months and two future months from today's date
-        const oDate = new Date(toValue(date))
-        const month = oDate.getMonth() + 1
-        const year = oDate.getFullYear()
+        const date = new Date()
+        const month = date.getMonth() + 1
+        const year = date.getFullYear()
 
         const dates: [string] = []
 
@@ -45,16 +45,17 @@ export async function useSnapshotGenerator(date: any) {
             
             const result = toValue(oBudgets)
             result.forEach(budget => {
-                let budgets = {}
-                budgets.budget_id = budget.budget_id
-                budgets.title = budget.title
+                let cBudget = {} // Temporary budget container
+                cBudget.budget_id = budget.budget_id
+                cBudget.title = budget.title
 
                 let hasBudgetBalance = false
 
+                // Search for the transaction balances (assigned and available balance) for the corresponding budget
                 balances.forEach(budgetBalance => {
                     if (budget.budget_id == budgetBalance.budget_id && month == budgetBalance.budget_month) {
-                        budgets.assigned = budgetBalance.assigned
-                        budgets.available = budgetBalance.available
+                        cBudget.assigned = budgetBalance.assigned
+                        cBudget.available = budgetBalance.available
 
                         hasBudgetBalance = true
 
@@ -69,7 +70,10 @@ export async function useSnapshotGenerator(date: any) {
                     }
                 })
 
+                // Filling of the budget months where there's no budget activity
                 if (!hasBudgetBalance) {
+                    // In the case of no budget activity for this month
+                    // use the available balance of the budget from the latest activity
                     if (lastRunningBalance[budget.budget_id]) {
                         const oEnding = lastRunningBalance[budget.budget_id]
 
@@ -77,14 +81,15 @@ export async function useSnapshotGenerator(date: any) {
                             oEnding.assigned = 0
                         }
 
-                        budgets = oEnding
+                        cBudget = oEnding
                     } else {
-                        budgets.assigned = 0
-                        budgets.available = 0
+                        cBudget.assigned = 0
+                        cBudget.available = 0
                     }
                 }
 
-                oMonths.budgets.push(budgets)
+                // Populate all the budgets with assigned and available funds per month
+                oMonths.budgets.push(cBudget)
             })
             
             data.push(oMonths)
@@ -93,11 +98,20 @@ export async function useSnapshotGenerator(date: any) {
         oBudgetSnapshots.value = data
     }
 
-    watchEffect(() => {
-        console.log('useSnapshotGenerator::watchEffect')
-        localStorage.setItem('BudgetView:Budgets', JSON.stringify(toValue(oBudgets)))
+    watch(oBudgets.value, (newValue) => {
+        console.log('useSnapshotGenerator::watch:oBudgets')
+        localStorage.setItem('BudgetView:Budgets', JSON.stringify(toValue(newValue)))
         generate()
     })
+    
+    watch(oBudgetSnapshots, (newValue) => {
+        console.log('useSnapshotGenerator::watch:oBudgetSnapshots')
+        localStorage.setItem('BudgetView:Snapshots', JSON.stringify(toValue(newValue)))
+    }, { deep: true })
+
+    if (!toValue(oBudgetSnapshots)) {
+        generate()
+    }
 }
 
 /**
@@ -106,7 +120,7 @@ export async function useSnapshotGenerator(date: any) {
  * @param transaction   New transaction
  */
 export async function useRecalculateSnapshots(transaction: {}) {
-    const result = toValue(oBudgetSnapshots)
+    const result = oBudgetSnapshots.value
 
     result.forEach(row => {
         const snapshot = {
@@ -142,9 +156,11 @@ export async function useRecalculateSnapshots(transaction: {}) {
  * Snapshot selector
  * 
  * @param date 
- * @param snapshot Reactive from the client code to set the selected snapshot with
  */
-export function useSnapshotSelector(date, snapshot) {
+export function useSnapshotSelector(date) {
+    // Generate snapshots data structure
+    useSnapshotGenerator()
+
     const selectSnapshot = () => {
         const oDate = new Date(toValue(date))
         const month = oDate.getMonth() + 1
@@ -165,20 +181,4 @@ export function useSnapshotSelector(date, snapshot) {
     watchEffect(() => {
         selectSnapshot()
     })
-}
-
-export async function useOnBudgetSave(title: string) {
-    const api = new Api
-    await api.createBudget(title)
-
-    const result = oBudgets.value
-
-    result.push({
-        budget_id: 0,
-        title: title,
-        date_created: null,
-        date_modified: null
-    })
-
-    console.log('useOnBudgetSave')
 }
