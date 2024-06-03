@@ -44,9 +44,10 @@ export class Api {
             
             const response = await fetch("http://localhost:8787/api/fund_allocation", options)
             const result = await response.json()
-            return result.ok
+            return { ok: result.ok, result: result.transaction, message: result.error }
         } catch (error) {
             console.error(error)
+            return { ok: false, message: error }
         }
     }
     
@@ -60,9 +61,10 @@ export class Api {
             
             const response = await fetch("http://localhost:8787/api/budgets", options)
             const result = await response.json()
-            return result.budget
+            return { ok: true, result: result.budget, message: result.error }
         } catch (error) {
             console.error(error)
+            return { ok: false, message: error }
         }
     }
 
