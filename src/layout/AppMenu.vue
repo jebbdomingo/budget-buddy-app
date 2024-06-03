@@ -1,13 +1,21 @@
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, toValue } from 'vue';
 import { Api } from '../api'
 import AppMenuItem from './AppMenuItem.vue';
-
+import { useToast } from 'primevue/usetoast'
 import { oBudgets, useRecalculateSnapshots } from '../service/budget'
+
+const toast = useToast();
 
 async function fetchAccounts() {
     const api = new Api
-    accounts.value = await api.getAccounts()
+
+    accounts.value = JSON.parse(localStorage.getItem('AppMenu:Accounts')) || null
+
+    if (!toValue(accounts)) {
+        accounts.value = await api.getAccounts()
+        localStorage.setItem('AppMenu:Accounts', JSON.stringify(toValue(accounts)))
+    }
 }
 
 async function saveTransaction() {
@@ -16,12 +24,17 @@ async function saveTransaction() {
     const budget_month = oMonth + '-' + oDate.getFullYear()
 
     const api = new Api
-    await api.createTransaction(
+
+    const { ok, message } =  await api.createTransaction(
         selectedBudget.value.budget_id,
         selectedAccount.value.account_id,
         amount.value,
         budget_month
     )
+
+    if (!ok) {
+        toast.add({ severity: 'warn', summary: 'Operation failed', detail: message, life: 3000 });
+    }
 
     transactionModalVisible.value = false
 
