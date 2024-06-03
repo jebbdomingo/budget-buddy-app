@@ -1,10 +1,13 @@
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue';
+import { ref, onMounted } from 'vue';
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import Tag from 'primevue/tag'
 import { useSnapshotSelector, snapshot, oBudgets } from '../service/budget'
 import { Api } from '../api'
+import { useToast } from 'primevue/usetoast'
+
+const toast = useToast();
 
 const severity = (value) => {
     let severity: string = ''
@@ -26,16 +29,20 @@ const formatCurrency = (value: any) => {
 
 async function saveBudget() {
     const api = new Api
-    const res = await api.createBudget(budgetTitle.value)
+    const { ok, result, message } = await api.createBudget(budgetTitle.value)
 
-    const budgets = oBudgets.value
+    if (ok) {
+        const budgets = oBudgets.value
 
-    budgets.push({
-        budget_id: res.budget_id ?? 0,
-        title: budgetTitle.value,
-        date_created: null,
-        date_modified: null
-    })
+        budgets.push({
+            budget_id: result.budget_id,
+            title: budgetTitle.value,
+            date_created: null,
+            date_modified: null
+        })
+    } else {
+        toast.add({ severity: 'warn', summary: 'Operation failed', detail: message, life: 3000 });
+    }
 
     newBudgetModalVisible.value = false
 }
