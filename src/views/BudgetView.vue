@@ -3,7 +3,7 @@ import { ref, onMounted } from 'vue';
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import Tag from 'primevue/tag'
-import { useSnapshotSelector, snapshot, oBudgets } from '../service/budget'
+import { budgetsInit, useSnapshotSelector, snapshot, oBudgets } from '../composables/budget'
 import { Api } from '../api'
 import { useToast } from 'primevue/usetoast'
 
@@ -48,6 +48,8 @@ async function saveBudget() {
 }
 
 onMounted(() => {
+    // Generate snapshots data structure
+    budgetsInit()
     useSnapshotSelector(date)
 })
 

@@ -8,7 +8,8 @@ export const snapshot = ref(null)
 /**
  * Generate budgets balances data structure for app presentation
  */
-export async function useSnapshotGenerator() {
+export async function budgetsInit() {
+    console.log('budgetsInit()')
     const api = new Api
 
     oBudgets.value = JSON.parse(localStorage.getItem('BudgetView:Budgets')) || null
@@ -120,6 +121,8 @@ export async function useSnapshotGenerator() {
  * @param transaction   New transaction
  */
 export async function useRecalculateSnapshots(transaction: {}) {
+    console.log('useRecalculateSnapshots')
+    
     const result = oBudgetSnapshots.value
 
     result.forEach(row => {
@@ -158,9 +161,6 @@ export async function useRecalculateSnapshots(transaction: {}) {
  * @param date 
  */
 export function useSnapshotSelector(date) {
-    // Generate snapshots data structure
-    useSnapshotGenerator()
-
     const selectSnapshot = () => {
         const oDate = new Date(toValue(date))
         const month = oDate.getMonth() + 1
@@ -179,6 +179,7 @@ export function useSnapshotSelector(date) {
     }
 
     watchEffect(() => {
+        console.log('selectSnapshot()')
         selectSnapshot()
     })
 }

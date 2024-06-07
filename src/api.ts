@@ -29,6 +29,16 @@ export class Api {
         }
     }
 
+    async getTransactionsByType(type: string, id: number) {
+        try {
+            const response = await fetch('http://localhost:8787/api/transactions/filter/' + type + '/' + id)
+            const result = await response.json()
+            return result.transactions
+        } catch (error) {
+            console.error(error)
+        }
+    }
+
     async createTransaction(
         budget_id: number,
         account_id: number,
@@ -67,6 +77,41 @@ export class Api {
             return { ok: false, message: error }
         }
     }
+    
+    async createAccount(title: string) {
+        try {
+            const options = {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ title: title })
+            }
+            
+            const response = await fetch("http://localhost:8787/api/accounts", options)
+            const result = await response.json()
+            console.log(result)
+            return { ok: true, result: result.account, message: result.error }
+        } catch (error) {
+            console.error(error)
+            return { ok: false, message: error }
+        }
+    }
+    
+    async updateAccount(account_id: number, title: string) {
+        try {
+            const options = {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ account_id: account_id, title: title })
+            }
+            
+            const response = await fetch("http://localhost:8787/api/accounts", options)
+            const result = await response.json()
+            return { ok: true, result: result.account, message: result.error }
+        } catch (error) {
+            console.error(error)
+            return { ok: false, message: error }
+        }
+    }
 
     // async getSnapshots() {
     //     try {
@@ -91,14 +136,14 @@ export class Api {
         }
     }
     
-    async getSnapshotsBy(budget_month: string) {
-        try {
-            const response = await fetch('http://localhost:8787/api/snapshots/month/' + budget_month)
-            const result = await response.json()
-            const snapshots = result.snapshots
-            return snapshots
-        } catch (error) {
-            console.error(error)
-        }
-    }
+    // async getSnapshotsBy(budget_month: string) {
+    //     try {
+    //         const response = await fetch('http://localhost:8787/api/snapshots/month/' + budget_month)
+    //         const result = await response.json()
+    //         const snapshots = result.snapshots
+    //         return snapshots
+    //     } catch (error) {
+    //         console.error(error)
+    //     }
+    // }
 }
