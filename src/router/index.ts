@@ -21,7 +21,12 @@ const router = createRouter({
           // this generates a separate chunk (Accounts.[hash].js) for this route
           // which is lazy-loaded when the route is visited.
           component: () => import('@/views/AccountsView.vue')
-        }
+        },
+        {
+            path: '/transactions/:account_id',
+            name: 'transactions',
+            component: () => import('@/views/TransactionsView.vue')
+          }
       ]
     },
   ]
