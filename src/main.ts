@@ -24,7 +24,8 @@ import SelectButton from 'primevue/selectbutton'
 import InputSwitch from 'primevue/inputswitch';
 import Calendar from 'primevue/calendar'
 import Dialog from 'primevue/dialog';
-
+import { useAccountStore } from './stores/account'
+import { useBudgetStore } from './stores/budget'
 
 import '@/assets/styles.scss';
 
@@ -52,5 +53,12 @@ app.component('SelectButton', SelectButton)
 app.component('InputSwitch', InputSwitch)
 app.component('Calendar', Calendar)
 app.component('Dialog', Dialog)
+
+const accountStore = useAccountStore()
+accountStore.initialize()
+
+// Generate snapshots data structure
+const budgetStore = useBudgetStore()
+budgetStore.initialize()
 
 app.mount('#app')

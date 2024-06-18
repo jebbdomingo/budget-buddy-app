@@ -1,4 +1,4 @@
-export class Api {
+export class BudgetApi {
     async getBudgets() {
         try {
             const response = await fetch('http://localhost:8787/api/budgets')
@@ -19,13 +19,24 @@ export class Api {
         }
     }
     
+    /**
+     * Fetch accounts with running balances
+     * 
+     * @returns [accounts] or { error: error}
+     */
     async getAccountBalances() {
         try {
             const response = await fetch('http://localhost:8787/api/accountbalances')
             const result = await response.json()
-            return result.accounts
+
+            if (result.accounts) {
+                return result.accounts
+            } else {
+                return { error: result.err }
+            }
         } catch (error) {
             console.error(error)
+            return { error: error }
         }
     }
 
@@ -71,7 +82,37 @@ export class Api {
             
             const response = await fetch("http://localhost:8787/api/budgets", options)
             const result = await response.json()
-            return { ok: true, result: result.budget, message: result.error }
+            return { ok: result.budget ? true : false, budget: result.budget, message: result.error }
+        } catch (error) {
+            console.error(error)
+            return { ok: false, message: error }
+        }
+    }
+
+    async updateBudget(budget_id: number, title: string) {
+        try {
+            const options = {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ budget_id: budget_id, title: title })
+            }
+            
+            const response = await fetch("http://localhost:8787/api/budgets", options)
+            const result = await response.json()
+            return { ok: result.budget ? true : false, result: result.budget, message: result.error }
+        } catch (error) {
+            console.error(error)
+            return { ok: false, message: error }
+        }
+    }
+
+    async archiveAccount(id: number) {
+        try {
+            const response = await fetch('http://localhost:8787/api/accounts/archive/' + id)
+            const result = await response.json()
+            console.log(result)
+
+            return { ok: result.account ? true : false, account: result.account, message: result.error }
         } catch (error) {
             console.error(error)
             return { ok: false, message: error }
@@ -88,8 +129,7 @@ export class Api {
             
             const response = await fetch("http://localhost:8787/api/accounts", options)
             const result = await response.json()
-            console.log(result)
-            return { ok: true, result: result.account, message: result.error }
+            return { ok: true, account: result.account, message: result.error }
         } catch (error) {
             console.error(error)
             return { ok: false, message: error }

@@ -1,5 +1,4 @@
 import { toValue, ref, watch } from 'vue'
-import { Api } from '../api'
 
 export type Transaction = {
 	account_id: number

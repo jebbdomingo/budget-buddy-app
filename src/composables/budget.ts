@@ -1,5 +1,6 @@
 import { toValue, watchEffect, ref, watch } from 'vue'
-import { Api } from '../api'
+import { BudgetApi } from '../api/budget'
+import { BudgetService } from '../service/budget'
 
 export const oBudgetSnapshots = ref(null)
 export const oBudgets = ref(null)
@@ -10,14 +11,15 @@ export const snapshot = ref(null)
  */
 export async function budgetsInit() {
     console.log('budgetsInit()')
-    const api = new Api
+    const api = new BudgetApi
+    const budgetService = new BudgetService
 
     oBudgets.value = JSON.parse(localStorage.getItem('BudgetView:Budgets')) || null
     oBudgetSnapshots.value = JSON.parse(localStorage.getItem('BudgetView:Snapshots')) || null
     let balances = JSON.parse(localStorage.getItem('BudgetView:Balances')) || null
     
     if (!toValue(oBudgetSnapshots)) {
-        oBudgets.value = await api.getBudgets()
+        oBudgets.value = await budgetService.getBudgets()
         balances = await api.getBudgetsBalances()
 
         localStorage.setItem('BudgetView:Budgets', JSON.stringify(toValue(oBudgets)))

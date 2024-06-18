@@ -24,20 +24,6 @@
         </div>
     </div>
 
-    <template>
-        <div class="card flex flex-wrap gap-3 p-fluid">
-            <Dialog v-model:visible="transactionModalVisible" modal header="Account" :style="{ width: '25rem' }">
-                <div class="flex align-items-center gap-3 mb-5">
-                    <InputText placeholder="Give it a nickname" v-model="accountTitle" class="w-full" />
-                </div>
-                <div class="flex justify-content-end gap-2">
-                    <Button type="button" label="Cancel" severity="secondary" @click="transactionModalVisible = false"></Button>
-                    <Button type="button" label="Save" @click="saveAccount"></Button>
-                </div>
-            </Dialog>
-        </div>
-    </template>
-
     <TransactionView />
 
 </template>
@@ -48,9 +34,9 @@ import { useRoute, useRouter } from 'vue-router'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import Tag from 'primevue/tag'
-import { Api } from '../api'
+import { BudgetApi } from '../api/budget'
 import { useToast } from 'primevue/usetoast'
-import { accountsInit, accounts } from '../composables/accounts'
+import { accountsInit, accounts } from '../composables/deleted.accounts'
 import TransactionView from './TransactionView.vue'
 import { transactionModalVisible } from '../stores/state'
 import type { Transaction } from '@/composables/transaction'
@@ -86,19 +72,22 @@ function back() {
 onMounted(async() => {
     console.log(route.params.account_id)
 
-    const api = new Api
+    const account_id = route.params.account_id
+    const api = new BudgetApi
 
-    transactions.value = JSON.parse(localStorage.getItem('TransactionsView:transactions')) || null
+    const storageName = 'AccountTransactions:' + account_id
+
+    transactions.value = JSON.parse(localStorage.getItem(storageName)) || null
 
     console.log(toValue(transactions))
     if (!toValue(transactions)) {
         transactions.value = await api.getTransactionsByType('account', route.params.account_id)
-        localStorage.setItem('TransactionsView:transactions', JSON.stringify(toValue(transactions)))
+        localStorage.setItem(storageName, JSON.stringify(toValue(transactions)))
     }
 
     // watch(transactions.value, (newValue) => {
     //     console.log('TransactionsView::watch:accounts')
-    //     localStorage.setItem('TransactionsView:transactions', JSON.stringify(toValue(newValue)))
+    //     localStorage.setItem(storageName, JSON.stringify(toValue(newValue)))
     // })
 })
 </script>

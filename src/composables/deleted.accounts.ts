@@ -1,5 +1,5 @@
 import { toValue, ref, watch } from 'vue'
-import { Api } from '../api'
+import { AccountService } from '../service/deleted.account'
 
 export type Account = {
 	account_id: number
@@ -15,14 +15,9 @@ export type AccountTransaction = {
 export const accounts: Account[] = ref<Account[]>()
 
 export async function accountsInit() {
-    const api = new Api
+    const accountService = new AccountService
 
-    accounts.value = JSON.parse(localStorage.getItem('Service:Accounts')) || null
-
-    if (!toValue(accounts)) {
-        accounts.value = await api.getAccountBalances()
-        localStorage.setItem('Service:Accounts', JSON.stringify(toValue(accounts)))
-    }
+    accounts.value = await accountService.getAccounts()
 
     watch(accounts.value, (newValue) => {
         console.log('accountsInit::watch:accounts')
