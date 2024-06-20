@@ -16,7 +16,7 @@
                     <Column field="title"></Column>
                     <Column field="debit" header="Amount" headerStyle="width: 7rem; text-align: right" bodyStyle="text-align: right">
                     <template #body="slotProps">
-                        <Tag :value="formatCurrency(slotProps.data.debit)" :severity="severity(slotProps.data.debit)"></Tag>
+                        <span :class="transactionColor(amount(slotProps.data))">{{ formatCurrency(amount(slotProps.data)) }}</span>
                     </template>
                     </Column>
                 </DataTable>
@@ -36,7 +36,6 @@ import Column from 'primevue/column'
 import Tag from 'primevue/tag'
 import { BudgetApi } from '../api/budget'
 import { useToast } from 'primevue/usetoast'
-import { accountsInit, accounts } from '../composables/deleted.accounts'
 import TransactionView from './TransactionView.vue'
 import { transactionModalVisible } from '../stores/state'
 import type { Transaction } from '@/composables/transaction'
@@ -46,6 +45,12 @@ const router = useRouter()
 const toast = useToast()
 const dt = ref(null)
 const transactions: Transaction[] = ref<Transaction[]>()
+
+const amount = (data) => {
+    const output: number = data.debit ? data.debit : -data.credit
+
+    return output
+}
 
 const severity = (value) => {
     let severity: string = ''
@@ -61,6 +66,18 @@ const severity = (value) => {
     return severity
 }
 
+const transactionColor = (value) => {
+    let className: string = ''
+
+    if (value > 0) {
+        className = 'text-primary-600'
+    } else {
+        className = 'text-secondary'
+    }
+
+    return className
+}
+
 const formatCurrency = (value: any) => {
     return value.toLocaleString('en-US', { style: 'currency', currency: 'PHP' })
 }
@@ -73,7 +90,7 @@ onMounted(async() => {
     const account_id = route.params.account_id
     const api = new BudgetApi
 
-    const storageName = 'AccountTransactions:' + account_id
+    const storageName = 'AccountTransactions-' + account_id
 
     transactions.value = JSON.parse(localStorage.getItem(storageName)) || null
 

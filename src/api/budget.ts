@@ -53,6 +53,8 @@ export class BudgetApi {
     async createTransaction(
         budget_id: number,
         account_id: number,
+        transaction_type: string,
+        transaction_date: string,
         amount: number,
         budget_month: string
     ) {
@@ -60,7 +62,7 @@ export class BudgetApi {
             const options = {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ budget_id: budget_id, account_id: account_id, amount: amount, budget_month: budget_month })
+                body: JSON.stringify({ budget_id: budget_id, account_id: account_id, transaction_type: transaction_type, transaction_date: transaction_date, amount: amount, budget_month: budget_month })
             }
             
             const response = await fetch("http://localhost:8787/api/fund_allocation", options)

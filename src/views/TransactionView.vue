@@ -5,6 +5,9 @@
                 <InputGroup>
                     <InputGroupAddon>₱</InputGroupAddon>
                     <InputNumber placeholder="Amount" v-model="amount" inputId="minmaxfraction" :minFractionDigits="2" :maxFractionDigits="5" />
+                    <InputGroupAddon>
+                        <SelectButton v-model="selectedTransactionType" :options="transactionTypes" aria-labelledby="basic" :allow-empty="false" />
+                    </InputGroupAddon>
                 </InputGroup>
             </div>
             <div class="flex align-items-center gap-3 mb-5">
@@ -44,6 +47,8 @@ const selectedAccount = ref()
 const payee = ref()
 const amount = ref()
 const transactionDate = ref(new Date())
+const selectedTransactionType = ref('Outflow');
+const transactionTypes = ref(['Outflow', 'Inflow']);
 
 async function handleSave() {
     const oDate = new Date(transactionDate.value);
@@ -55,6 +60,8 @@ async function handleSave() {
     const { ok, message } =  await api.createTransaction(
         selectedBudget.value.budget_id,
         selectedAccount.value.account_id,
+        selectedTransactionType.value,
+        oDate.toISOString(),
         amount.value,
         budget_month
     )
@@ -68,10 +75,12 @@ async function handleSave() {
     budgetStore.regenerateSnapshots('allocation', {
         budget_id: selectedBudget.value.budget_id,
         budget_month: budget_month,
+        transaction_type: selectedTransactionType.value,
         amount: amount.value
     })
 
     accountStore.recalculateAccounts({
+        transaction_type: selectedTransactionType.value,
         account_id: selectedAccount.value.account_id,
         amount: amount.value
     })

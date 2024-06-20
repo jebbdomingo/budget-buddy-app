@@ -77,10 +77,17 @@ export const useAccountStore = defineStore('account', () => {
 
     async function recalculateAccounts(transaction: AccountTransaction) {
         const result = accounts.value
+
+        const calculate = {
+            '+': function(a: number, b: number) { return a + b },
+            '-': function(a: number, b: number) { return a - b }
+        }
+
+        const operator = transaction.transaction_type == 'Inflow' ? '+' : '-'
     
         result.forEach(row => {
             if (row.account_id == transaction.account_id) {
-                row.balance += transaction.amount
+                row.balance = calculate[operator](row.balance, transaction.amount)
             }
         })
     }

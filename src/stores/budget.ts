@@ -327,7 +327,7 @@ class SnapshotsOperation {
      * Calculate running balance on each snapshot
      * 
      * @param row 
-     * @param transaction { budget_month, budget_id, amount }
+     * @param transaction { budget_id, budget_month, transaction_type, amount }
      */
     runningBalance(row, transaction: BudgetTransaction) {
         console.log('budget-store.snapshot-operation.running-balance')
@@ -339,12 +339,19 @@ class SnapshotsOperation {
             available: 0
         }
 
+        const calculate = {
+            '+': function(a: number, b: number) { return a + b },
+            '-': function(a: number, b: number) { return a - b }
+        }
+
+        const operator = transaction.transaction_type == 'Inflow' ? '+' : '-'
+
         if (row.month == transaction.budget_month) {
             row.budgets.forEach((budget, index) => {
                 if (budget.budget_id == transaction.budget_id) {
                     snapshot.title = budget.title
-                    snapshot.assigned = budget.assigned + transaction.amount
-                    snapshot.available = budget.available + transaction.amount
+                    snapshot.assigned = calculate[operator](budget.assigned, transaction.amount)
+                    snapshot.available = calculate[operator](budget.available, transaction.amount)
                     row.budgets[index] = snapshot
                 }
             })
@@ -353,7 +360,7 @@ class SnapshotsOperation {
                 if (budget.budget_id == transaction.budget_id) {
                     snapshot.title = budget.title
                     snapshot.assigned = budget.assigned
-                    snapshot.available = budget.available + transaction.amount
+                    snapshot.available = calculate[operator](budget.available, transaction.amount)
                     row.budgets[index] = snapshot
                 }
             })
