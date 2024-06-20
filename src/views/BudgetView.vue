@@ -1,110 +1,3 @@
-<script setup lang="ts">
-import { ref, onMounted, reactive } from 'vue';
-import DataTable from 'primevue/datatable'
-import Column from 'primevue/column'
-import Tag from 'primevue/tag'
-import { useBudgetStore, type Budget } from '../stores/budget'
-import { useToast } from 'primevue/usetoast'
-
-const store = useBudgetStore()
-
-const toast = useToast();
-
-const severity = (value) => {
-    let severity: string = ''
-
-    if (value > 0) {
-        severity = 'success'
-    } else if (value < 0) {
-        severity = 'danger'
-    } else {
-        severity = 'secondary'
-    }
-
-    return severity
-}
-
-const formatCurrency = (value: any) => {
-    return value.toLocaleString('en-US', { style: 'currency', currency: 'PHP' })
-}
-
-const showToast = (result: boolean, message: string) => {
-    if (!result) {
-        toast.add({ severity: 'warn', summary: 'Operation failed', detail: message, life: 3000 })
-    } else {
-        toast.add({ severity: 'success', summary: 'Operation successful', detail: message, life: 3000 })
-    }
-}
-
-const date = ref(new Date())
-
-const dt = ref(null)
-const today = new Date()
-today.setMonth(today.getMonth() + 2)
-const maxDate = ref(today)
-const budgetDialog = ref(false)
-const archiveDialog = ref(false)
-
-const budget = reactive<Budget>({
-    budget_id: 0,
-    title: ''
-})
-
-const edit = (budg: Budget) => {
-    const oBudget = {...budg}
-    budget.budget_id = oBudget.budget_id
-    budget.title = oBudget.title
-    budgetDialog.value = true
-}
-
-async function handleSave() {
-    console.log('handleSave()')
-
-    let result
-
-    if (budget.budget_id) {
-        result = await store.updateBudget(budget)
-    } else {
-        result = await store.createBudget(budget)
-    }
-
-    if (!result) {
-        showToast(result, 'An error has occured')
-    }
-
-    budgetDialog.value = false
-    budget.budget_id = 0
-    budget.title = ''
-}
-
-const confirmArchive = (budg: Budget) => {
-    const oBudget = {...budg}
-    budget.budget_id = oBudget.budget_id
-    budget.title = oBudget.title
-    archiveDialog.value = true
-}
-
-const handleArchive = async () => {
-    const result = await store.archiveBudget(budget)
-
-    archiveDialog.value = false
-    
-    if (result) {
-        showToast(true, budget.title + ' has been archived')
-    } else {
-        showToast(false, 'Unable to archive ' + budget.title)
-    }
-
-    // Reset account
-    budget.budget_id = 0
-    budget.title = ''
-}
-
-onMounted(() => {
-    store.snapshotSelector(date)
-})
-</script>
-
 <template>
 
     <div class="grid">
@@ -183,3 +76,107 @@ onMounted(() => {
     </template>
 
 </template>
+
+<script setup lang="ts">
+import { ref, onMounted, reactive } from 'vue';
+import DataTable from 'primevue/datatable'
+import Column from 'primevue/column'
+import Tag from 'primevue/tag'
+import { useBudgetStore, type Budget } from '../stores/budget'
+import { useToast } from 'primevue/usetoast'
+
+const store = useBudgetStore()
+const toast = useToast();
+const date = ref(new Date())
+const dt = ref(null)
+const today = new Date()
+today.setMonth(today.getMonth() + 2)
+const maxDate = ref(today)
+const budgetDialog = ref(false)
+const archiveDialog = ref(false)
+
+const budget = reactive<Budget>({
+    budget_id: 0,
+    title: ''
+})
+
+const severity = (value) => {
+    let severity: string = ''
+
+    if (value > 0) {
+        severity = 'success'
+    } else if (value < 0) {
+        severity = 'danger'
+    } else {
+        severity = 'secondary'
+    }
+
+    return severity
+}
+
+const formatCurrency = (value: any) => {
+    return value.toLocaleString('en-US', { style: 'currency', currency: 'PHP' })
+}
+
+const showToast = (result: boolean, message: string) => {
+    if (!result) {
+        toast.add({ severity: 'warn', summary: 'Operation failed', detail: message, life: 3000 })
+    } else {
+        toast.add({ severity: 'success', summary: 'Operation successful', detail: message, life: 3000 })
+    }
+}
+
+const edit = (budg: Budget) => {
+    const oBudget = {...budg}
+    budget.budget_id = oBudget.budget_id
+    budget.title = oBudget.title
+    budgetDialog.value = true
+}
+
+async function handleSave() {
+    console.log('handleSave()')
+
+    let result
+
+    if (budget.budget_id) {
+        result = await store.updateBudget(budget)
+    } else {
+        result = await store.createBudget(budget)
+    }
+
+    if (!result) {
+        showToast(result, 'An error has occured')
+    }
+
+    budgetDialog.value = false
+    budget.budget_id = 0
+    budget.title = ''
+}
+
+const confirmArchive = (budg: Budget) => {
+    const oBudget = {...budg}
+    budget.budget_id = oBudget.budget_id
+    budget.title = oBudget.title
+    archiveDialog.value = true
+}
+
+const handleArchive = async () => {
+    const result = await store.archiveBudget(budget)
+
+    archiveDialog.value = false
+    
+    if (result) {
+        showToast(true, budget.title + ' has been archived')
+    } else {
+        showToast(false, 'Unable to archive ' + budget.title)
+    }
+
+    // Reset account
+    budget.budget_id = 0
+    budget.title = ''
+}
+
+onMounted(() => {
+    store.snapshotSelector(date)
+})
+</script>

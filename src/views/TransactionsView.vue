@@ -70,8 +70,6 @@ function back() {
 }
 
 onMounted(async() => {
-    console.log(route.params.account_id)
-
     const account_id = route.params.account_id
     const api = new BudgetApi
 
@@ -79,7 +77,6 @@ onMounted(async() => {
 
     transactions.value = JSON.parse(localStorage.getItem(storageName)) || null
 
-    console.log(toValue(transactions))
     if (!toValue(transactions)) {
         transactions.value = await api.getTransactionsByType('account', route.params.account_id)
         localStorage.setItem(storageName, JSON.stringify(toValue(transactions)))

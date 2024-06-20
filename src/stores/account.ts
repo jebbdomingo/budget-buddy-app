@@ -87,7 +87,7 @@ export const useAccountStore = defineStore('account', () => {
 
     watch(accounts, (newValue) => {
         // Store updated accounts in local storage
-        console.log('store.account::watch')
+        console.log('account-store.watch:accounts')
         localStorage.setItem('accounts', JSON.stringify(toValue(newValue)))
     }, { deep: true })
 

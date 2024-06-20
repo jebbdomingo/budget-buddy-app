@@ -65,7 +65,7 @@ async function handleSave() {
 
     transactionModalVisible.value = false
 
-    budgetStore.recalculateSnapshots({
+    budgetStore.regenerateSnapshots('allocation', {
         budget_id: selectedBudget.value.budget_id,
         budget_month: budget_month,
         amount: amount.value
