@@ -1,7 +1,6 @@
 import { ref, watch, watchEffect, toValue } from 'vue'
 import { defineStore } from 'pinia'
 import { BudgetApi } from '../api/budget'
-import { transactionInit } from '@/composables/transaction'
 
 export interface Budget {
 	budget_id: number
