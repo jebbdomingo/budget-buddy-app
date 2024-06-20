@@ -1,6 +1,7 @@
 import { ref, watch, watchEffect, toValue } from 'vue'
 import { defineStore } from 'pinia'
 import { BudgetApi } from '../api/budget'
+import { transactionInit } from '@/composables/transaction'
 
 export interface Budget {
 	budget_id: number
@@ -16,6 +17,7 @@ export interface BudgetBalance {
 export interface BudgetTransaction {
 	budget_id: number
 	budget_month: string
+    title: string
 	amount: number
 }
 
@@ -144,10 +146,10 @@ export const useBudgetStore = defineStore('budget', () => {
     }
 
     async function archiveBudget(budget: Budget) {
-        const { ok } = await api.archiveBudget(budget.account_id)
+        const { ok } = await api.archiveBudget(budget.budget_id)
 
         if (ok) {
-            const result = budgets.value.filter(val => val.account_id !== budget.account_id)
+            const result = budgets.value.filter(val => val.budget_id !== budget.budget_id)
             setBudgets(result)
         }
 
@@ -157,13 +159,14 @@ export const useBudgetStore = defineStore('budget', () => {
     async function updateBudget(budget: Budget) {
         const { ok } = await api.updateBudget(budget.budget_id, budget.title)
 
-        if (ok) {
-            budgets.value.forEach((budg: Budget, index: number) => {
-                if (budg.budget_id == budget.budget_id) {
-                    budg.title = budget.title
-                    budgets[index] = budg
-                }
-            })
+        const index = findIndexById(toValue(budgets), budget.budget_id)
+        
+        if (index) {
+            // Update reactive budgets
+            budgets.value[index].title = budget.title
+
+            // Update reactive snapshots
+            recalculateSnapshots({ budget_id: budget.budget_id, title: budget.title })
         }
 
         return ok
@@ -179,6 +182,8 @@ export const useBudgetStore = defineStore('budget', () => {
                 date_created: null,
                 date_modified: null
             })
+
+            recalculateSnapshots({ budget_id: budget.budget_id, title: budget.title })
         }
 
         return ok
@@ -186,42 +191,96 @@ export const useBudgetStore = defineStore('budget', () => {
 
     /**
      * Dynamically re-calculate all the budget snapshots for presentation
+     * There are two (2) reasons to update the snapshots
+     *  1. Change of budget's title
+     *  2. Budget allocation (i.e. assigned and available balance)
      * 
      * @param transaction   New transaction
      */
     async function recalculateSnapshots(transaction: BudgetTransaction) {
-        console.log('recalculateSnapshots')
-        
-        const result = snapshots.value
-
-        result.forEach(row => {
-            const snapshot = {
-                budget_id: transaction.budget_id,
-                title: null,
-                assigned: 0,
-                available: 0
-            }
-            
-            if (row.month == transaction.budget_month) {
-                row.budgets.forEach((budget, index) => {
-                    if (budget.budget_id == transaction.budget_id) {
-                        snapshot.title = budget.title
-                        snapshot.assigned = budget.assigned + transaction.amount
-                        snapshot.available = budget.available + transaction.amount
-                        row.budgets[index] = snapshot
-                    }
-                })
-            } else if (row.month > transaction.budget_month) {
-                row.budgets.forEach((budget, index) => {
-                    if (budget.budget_id == transaction.budget_id) {
-                        snapshot.title = budget.title
-                        snapshot.assigned = budget.assigned
-                        snapshot.available = budget.available + transaction.amount
-                        row.budgets[index] = snapshot
-                    }
-                })
+        snapshots.value.forEach(row => {
+            if (transaction.amount) {
+                runningBalance(row, transaction)
+            } else if (transaction.title) {
+                changeBudgetTitle(row, transaction)
             }
         })
+    }
+
+    /**
+     * Calculate running balance on each snapshot
+     * 
+     * @param row 
+     * @param transaction 
+     */
+    const runningBalance = (row, transaction: BudgetTransaction) => {
+        const snapshot = {
+            budget_id: transaction.budget_id,
+            title: '',
+            assigned: 0,
+            available: 0
+        }
+
+        if (row.month == transaction.budget_month) {
+            row.budgets.forEach((budget, index) => {
+                if (budget.budget_id == transaction.budget_id) {
+                    snapshot.title = transaction.title ? transaction.title : budget.title
+                    snapshot.assigned = budget.assigned + transaction.amount
+                    snapshot.available = budget.available + transaction.amount
+                    row.budgets[index] = snapshot
+                }
+            })
+        } else if (row.month > transaction.budget_month) {
+            row.budgets.forEach((budget, index) => {
+                if (budget.budget_id == transaction.budget_id) {
+                    snapshot.title = transaction.title ? transaction.title : budget.title
+                    snapshot.assigned = budget.assigned
+                    snapshot.available = budget.available + transaction.amount
+                    row.budgets[index] = snapshot
+                }
+            })
+        }
+    }
+
+    /**
+     * Update budget title on each snapshot
+     * 
+     * @param row 
+     * @param transaction 
+     */
+    const changeBudgetTitle =(row, transaction: BudgetTransaction) => {
+        const snapshot = {
+            budget_id: transaction.budget_id,
+            title: transaction.title,
+            assigned: 0,
+            available: 0
+        }
+
+        const index = findIndexById(row.budgets, transaction.budget_id)
+        
+        if (index != -1) {
+            console.log('edit existing budget')
+            const budget = row.budgets[index]
+            snapshot.assigned = budget.assigned
+            snapshot.available = budget.available
+            row.budgets[index] = snapshot
+        } else {
+            console.log('add new budget')
+            row.budgets.push(snapshot)
+        }
+    }
+
+    const findIndexById = (data, id) => {
+        let index = -1
+
+        for (let i = 0; i < data.length; i++) {
+            if (data[i].budget_id === id) {
+                index = i
+                break
+            }
+        }
+
+        return index
     }
 
     /**

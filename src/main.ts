@@ -21,9 +21,9 @@ import InputNumber from 'primevue/inputnumber'
 import Dropdown from 'primevue/dropdown'
 import Sidebar from 'primevue/sidebar'
 import SelectButton from 'primevue/selectbutton'
-import InputSwitch from 'primevue/inputswitch';
+import InputSwitch from 'primevue/inputswitch'
 import Calendar from 'primevue/calendar'
-import Dialog from 'primevue/dialog';
+import Dialog from 'primevue/dialog'
 import { useAccountStore } from './stores/account'
 import { useBudgetStore } from './stores/budget'
 

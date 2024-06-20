@@ -106,13 +106,24 @@ export class BudgetApi {
         }
     }
 
+    async archiveBudget(id: number) {
+        try {
+            const response = await fetch('http://localhost:8787/api/budgets/archive/' + id)
+            const result = await response.json()
+
+            return { ok: result.ok, message: result.error }
+        } catch (error) {
+            console.error(error)
+            return { ok: false, message: error }
+        }
+    }
+
     async archiveAccount(id: number) {
         try {
             const response = await fetch('http://localhost:8787/api/accounts/archive/' + id)
             const result = await response.json()
-            console.log(result)
 
-            return { ok: result.account ? true : false, account: result.account, message: result.error }
+            return { ok: result.ok, message: result.error }
         } catch (error) {
             console.error(error)
             return { ok: false, message: error }
