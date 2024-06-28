@@ -1,17 +1,7 @@
 import { ref, watch, reactive, computed, toValue } from 'vue'
 import { defineStore } from 'pinia'
 import { BudgetApi } from '../api/budget'
-
-export interface Account {
-	account_id: number
-	title: string
-	balance: number
-}
-
-export interface AccountTransaction {
-	account_id: number
-	amount: number
-}
+import { type Account, type AccountTransaction } from '../types/types'
 
 const api = new BudgetApi
 

@@ -82,7 +82,8 @@ import { ref, onMounted, reactive } from 'vue';
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import Tag from 'primevue/tag'
-import { useBudgetStore, type Budget } from '../stores/budget'
+import { useBudgetStore } from '../stores/budget'
+import { type Budget } from '../types/types'
 import { useToast } from 'primevue/usetoast'
 
 const store = useBudgetStore()

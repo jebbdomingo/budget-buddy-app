@@ -1,29 +1,32 @@
 <template>
     <div class="card flex flex-wrap gap-3 p-fluid">
-        <Dialog v-model:visible="transactionModalVisible" modal header="Add Transaction" :style="{ width: '25rem' }">
+        <Dialog v-model:visible="transactionDialog" modal header="Add Transaction" :style="{ width: '25rem' }">
             <div class="flex align-items-center gap-3 mb-5">
                 <InputGroup>
                     <InputGroupAddon>₱</InputGroupAddon>
-                    <InputNumber placeholder="Amount" v-model="amount" inputId="minmaxfraction" :minFractionDigits="2" :maxFractionDigits="5" />
+                    <InputNumber placeholder="Amount" v-model="transactionStore.transaction.amount" inputId="minmaxfraction" :minFractionDigits="2" :maxFractionDigits="5" />
                     <InputGroupAddon>
-                        <SelectButton v-model="selectedTransactionType" :options="transactionTypes" aria-labelledby="basic" :allow-empty="false" />
+                        <SelectButton v-model="transactionStore.transaction.transaction_type" :options="transactionTypes" aria-labelledby="basic" :allow-empty="false" />
                     </InputGroupAddon>
                 </InputGroup>
             </div>
             <div class="flex align-items-center gap-3 mb-5">
-                <InputText placeholder="Payee" v-model="payee" class="w-full" />
+                <InputText placeholder="Payee" v-model="transactionStore.transaction.payee" class="w-full" />
             </div>
             <div class="flex align-items-center gap-3 mb-5">
-                <Dropdown v-model="selectedBudget" :options="budgetStore.budgets" filter optionLabel="title" placeholder="Budget" class="w-full"></Dropdown>
+                <Dropdown v-model="transactionStore.transaction.budget_id" :options="budgetStore.budgets" filter optionLabel="title" optionValue="budget_id" placeholder="Budget" class="w-full"></Dropdown>
             </div>
             <div class="flex align-items-center gap-3 mb-5">
-                <Dropdown v-model="selectedAccount" :options="accountStore.accounts" filter optionLabel="title" placeholder="Account" class="w-full"></Dropdown>
+                <Dropdown v-model="transactionStore.transaction.account_id" :options="accountStore.accounts" filter optionLabel="title" optionValue="account_id" placeholder="Account" class="w-full"></Dropdown>
             </div>
             <div class="flex align-items-center gap-3 mb-5">
-                <Calendar v-model="transactionDate" showButtonBar showIcon class="w-full" :manualInput="false" />
+                <Calendar v-model="transactionStore.transaction.transaction_date" showButtonBar showIcon class="w-full" :manualInput="false" />
+            </div>
+            <div class="flex align-items-center gap-3 mb-5">
+                <InputText placeholder="Enter a memo..." v-model="transactionStore.transaction.memo" class="w-full" />
             </div>
             <div class="flex justify-content-end gap-2">
-                <Button type="button" label="Cancel" severity="secondary" @click="transactionModalVisible = false"></Button>
+                <Button type="button" label="Cancel" severity="secondary" @click="transactionDialog = false"></Button>
                 <Button type="button" label="Save" @click="handleSave"></Button>
             </div>
         </Dialog>
@@ -32,62 +35,64 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
-import { BudgetApi } from '../api/budget'
 import { useToast } from 'primevue/usetoast'
-import { transactionModalVisible } from '../stores/state'
+import { transactionDialog } from '../stores/state'
 import { useBudgetStore } from '../stores/budget'
 import { useAccountStore } from '../stores/account'
+import { useTransactionStore } from '../stores/transaction'
+import { type Account, type Budget } from '../types/types'
 
 const accountStore = useAccountStore()
 const budgetStore = useBudgetStore()
+const transactionStore = useTransactionStore()
 
 const toast = useToast();
-const selectedBudget = ref()
-const selectedAccount = ref()
-const payee = ref()
-const amount = ref()
-const transactionDate = ref(new Date())
-const selectedTransactionType = ref('Outflow');
-const transactionTypes = ref(['Outflow', 'Inflow']);
+const transactionTypes = ref(['Outflow', 'Inflow'])
+const selectedBudget = ref(7)
+const selectedAccount = ref<Account>()
+
+const showToast = (result: boolean, message: string) => {
+    if (!result) {
+        toast.add({ severity: 'warn', summary: 'Operation failed', detail: message, life: 3000 })
+    } else {
+        toast.add({ severity: 'success', summary: 'Operation successful', detail: message, life: 3000 })
+    }
+}
 
 async function handleSave() {
-    const oDate = new Date(transactionDate.value);
+    const oDate = new Date()
     const oMonth = oDate.getMonth() + 1
-    const budget_month = oMonth + '-' + oDate.getFullYear()
+    
+    transactionStore.transaction.budget_month = oMonth + '-' + oDate.getFullYear()
+    
+    let result
 
-    const api = new BudgetApi
-
-    const { ok, message } =  await api.createTransaction(
-        selectedBudget.value.budget_id,
-        selectedAccount.value.account_id,
-        selectedTransactionType.value,
-        oDate.toISOString(),
-        amount.value,
-        budget_month
-    )
-
-    if (!ok) {
-        toast.add({ severity: 'warn', summary: 'Operation failed', detail: message, life: 3000 });
+    if (transactionStore.transaction.transaction_id) {
+        result = await transactionStore.update()
+    } else {
+        result = await transactionStore.create()
     }
 
-    transactionModalVisible.value = false
+    if (!result) {
+        showToast(result, 'An error has occured')
+    }
+
+    transactionDialog.value = false
 
     budgetStore.regenerateSnapshots('allocation', {
-        budget_id: selectedBudget.value.budget_id,
-        budget_month: budget_month,
-        transaction_type: selectedTransactionType.value,
-        amount: amount.value
+        budget_id: transactionStore.transaction.budget_id,
+        budget_month: transactionStore.transaction.budget_month,
+        transaction_type: transactionStore.transaction.transaction_type,
+        amount: transactionStore.transaction.amount
     })
 
     accountStore.recalculateAccounts({
-        transaction_type: selectedTransactionType.value,
-        account_id: selectedAccount.value.account_id,
-        amount: amount.value
+        transaction_type: transactionStore.transaction.transaction_type,
+        account_id: transactionStore.transaction.account_id,
+        amount: transactionStore.transaction.amount
     })
 
     // Reset reactives
-    selectedBudget.value = null
-    selectedAccount.value = null
-    amount.value = null
+    transactionStore.reset()
 }
 </script>

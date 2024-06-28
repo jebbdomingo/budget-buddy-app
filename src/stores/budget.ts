@@ -1,24 +1,7 @@
 import { ref, watch, watchEffect, toValue } from 'vue'
 import { defineStore } from 'pinia'
 import { BudgetApi } from '../api/budget'
-
-export interface Budget {
-	budget_id: number
-	title: string
-}
-
-export interface BudgetBalance {
-	budget_id: number
-	budget_month: string
-    amount: number
-}
-
-export interface BudgetTransaction {
-	budget_id: number
-	budget_month: string
-    title: string
-	amount: number
-}
+import { type Budget, type BudgetTransaction } from '../types/types'
 
 const api = new BudgetApi
 let o: SnapshotsOperation = <SnapshotsOperation>{}

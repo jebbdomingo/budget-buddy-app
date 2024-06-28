@@ -1,3 +1,5 @@
+import { type Transaction } from '../types/types'
+
 export class BudgetApi {
     async getBudgets() {
         try {
@@ -50,24 +52,34 @@ export class BudgetApi {
         }
     }
 
-    async createTransaction(
-        budget_id: number,
-        account_id: number,
-        transaction_type: string,
-        transaction_date: string,
-        amount: number,
-        budget_month: string
-    ) {
+    async createTransaction(transaction: Transaction) {
         try {
             const options = {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ budget_id: budget_id, account_id: account_id, transaction_type: transaction_type, transaction_date: transaction_date, amount: amount, budget_month: budget_month })
+                body: JSON.stringify(transaction)
             }
             
             const response = await fetch("http://localhost:8787/api/fund_allocation", options)
             const result = await response.json()
             return { ok: result.ok, result: result.transaction, message: result.error }
+        } catch (error) {
+            console.error(error)
+            return { ok: false, message: error }
+        }
+    }
+
+    async updateTransaction(transaction: Transaction) {
+        try {
+            const options = {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(transaction)
+            }
+            
+            const response = await fetch("http://localhost:8787/api/fund_allocation", options)
+            const result = await response.json()
+            return { ok: true, result: result.transaction, message: result.error }
         } catch (error) {
             console.error(error)
             return { ok: false, message: error }

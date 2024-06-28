@@ -1,3 +1,3 @@
 import { ref } from 'vue'
 
-export const transactionModalVisible = ref<boolean>(false)
+export const transactionDialog = ref<boolean>(false)

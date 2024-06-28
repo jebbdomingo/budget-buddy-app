@@ -69,7 +69,8 @@ import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import Tag from 'primevue/tag'
 import { useToast } from 'primevue/usetoast'
-import { useAccountStore, type Account } from '../stores/account'
+import { useAccountStore } from '../stores/account'
+import { type Account } from '../types/types'
 
 const store = useAccountStore()
 

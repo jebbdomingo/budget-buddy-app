@@ -7,18 +7,46 @@
                     <template v-slot:start>
                         <div class="my-2">
                             <Button label="Accounts" icon="pi pi-angle-left" class="mr-2" severity="secondary" @click="back()" />
-                            <Button label="Transaction" icon="pi pi-plus" class="mr-2" severity="primary" @click="transactionModalVisible = true" />
+                            <Button label="Transaction" icon="pi pi-plus" class="mr-2" severity="primary" @click="transactionDialog = true" />
                         </div>
                     </template>
                 </Toolbar>
 
-                <DataTable ref="dt" stripedRows :value="transactions">
-                    <Column field="title"></Column>
-                    <Column field="debit" header="Amount" headerStyle="width: 7rem; text-align: right" bodyStyle="text-align: right">
-                    <template #body="slotProps">
-                        <span :class="transactionColor(amount(slotProps.data))">{{ formatCurrency(amount(slotProps.data)) }}</span>
-                    </template>
+                <DataTable stateStorage="session" stateKey="dt-state-account-transactions-session" ref="dt" stripedRows :value="store.transactions" rowGroupMode="subheader" groupRowsBy="transaction_date" :rowClass="rowClass">
+                    <Column field="transaction_date" header="Date"></Column>
+                    <Column field="payee">
+                        <template #body="slotProps">
+                            <div>{{ slotProps.data.payee }}</div>
+                            <div><small>{{ slotProps.data.budget_title }}</small></div>
+                        </template>
                     </Column>
+                    <Column field="amount" header="Amount" headerStyle="width: 7rem; text-align: right" bodyStyle="text-align: right">
+                        <template #body="slotProps">
+                            <div :class="transactionColor(slotProps.data.amount)">{{ formatCurrency(slotProps.data.amount) }}</div>
+                            <div><small>{{ slotProps.data.memo }}</small></div>
+                        </template>
+                    </Column>
+                    <Column :exportable="false" style="min-width:8rem" headerStyle="width: 7rem; text-align: right" bodyStyle="text-align: right">
+                        <template #body="slotProps">
+                            <SplitButton
+                                label="Edit" icon="pi pi-check" menuButtonIcon="pi pi-cog" @click="edit(slotProps.data)" severity="secondary"
+                                :model="[
+                                    {
+                                        label: 'Archive',
+                                        icon: 'pi pi-trash',
+                                        command: () => {
+                                            confirmArchive(slotProps.data)
+                                        }
+                                    }
+                                ]"
+                            />
+                        </template>
+                    </Column>
+                    <template #groupheader="slotProps">
+                        <div class="flex align-items-center gap-2 text-secondary">
+                            <span><strong>{{ formatDate(slotProps.data.transaction_date) }}</strong></span>
+                        </div>
+                    </template>
                 </DataTable>
             </div>
         </div>
@@ -29,41 +57,24 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, toValue } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
-import Tag from 'primevue/tag'
-import { BudgetApi } from '../api/budget'
 import { useToast } from 'primevue/usetoast'
 import TransactionView from './TransactionView.vue'
-import { transactionModalVisible } from '../stores/state'
-import type { Transaction } from '@/composables/transaction'
+import { transactionDialog } from '../stores/state'
+import { useTransactionStore } from '../stores/transaction'
+import { type Transaction } from '../types/types'
 
 const route = useRoute()
 const router = useRouter()
 const toast = useToast()
 const dt = ref(null)
-const transactions: Transaction[] = ref<Transaction[]>()
+const store = useTransactionStore()
 
-const amount = (data) => {
-    const output: number = data.debit ? data.debit : -data.credit
-
-    return output
-}
-
-const severity = (value) => {
-    let severity: string = ''
-
-    if (value > 0) {
-        severity = 'success'
-    } else if (value < 0) {
-        severity = 'danger'
-    } else {
-        severity = 'secondary'
-    }
-
-    return severity
+const rowClass = (data) => {
+    return [{ 'bg-blue-50': data.transaction_id }];
 }
 
 const transactionColor = (value) => {
@@ -82,22 +93,35 @@ const formatCurrency = (value: any) => {
     return value.toLocaleString('en-US', { style: 'currency', currency: 'PHP' })
 }
 
+const formatDate = (value: string) => {
+    const date = new Date(value)
+    const formatter = new Intl.DateTimeFormat('en-US', { day: '2-digit', month: 'long', year: 'numeric' })
+    return formatter.format(date)
+    // return date.toLocaleDateString()
+}
+
 function back() {
     router.go(-1)
 }
 
+const edit = (txn: Transaction) => {
+    const oTxn = {...txn}
+
+    store.transaction.transaction_id = oTxn.transaction_id
+    store.transaction.budget_id = oTxn.budget_id
+    store.transaction.account_id = oTxn.account_id
+    store.transaction.transaction_type = oTxn.transaction_type
+    store.transaction.transaction_date = oTxn.transaction_date
+    store.transaction.amount = oTxn.amount
+    store.transaction.budget_month = oTxn.budget_month
+    store.transaction.payee = oTxn.payee
+    store.transaction.memo = oTxn.memo
+
+    transactionDialog.value = true;
+}
+
 onMounted(async() => {
-    const account_id = route.params.account_id
-    const api = new BudgetApi
-
-    const storageName = 'AccountTransactions-' + account_id
-
-    transactions.value = JSON.parse(localStorage.getItem(storageName)) || null
-
-    if (!toValue(transactions)) {
-        transactions.value = await api.getTransactionsByType('account', route.params.account_id)
-        localStorage.setItem(storageName, JSON.stringify(toValue(transactions)))
-    }
+    store.initialize(route.params.account_id)
 
     // watch(transactions.value, (newValue) => {
     //     console.log('TransactionsView::watch:accounts')
