@@ -2,6 +2,7 @@ import { ref, watch, watchEffect, toValue } from 'vue'
 import { defineStore } from 'pinia'
 import { BudgetApi } from '../api/budget'
 import { type Budget, type BudgetTransaction } from '../types/types'
+import { useTransactionStore } from './transaction'
 
 const api = new BudgetApi
 let o: SnapshotsOperation = <SnapshotsOperation>{}
@@ -50,7 +51,7 @@ export const useBudgetStore = defineStore('budget', () => {
             balances.value = data
 
             // Cache budgets
-            localStorage.setItem('budgets-balances', JSON.stringify(toValue(budgets)))
+            localStorage.setItem('budgets-balances', JSON.stringify(toValue(balances)))
         }
     }
 
@@ -116,10 +117,11 @@ export const useBudgetStore = defineStore('budget', () => {
      * 
      * @param type Type of transaction [allocation, update, remove]
      * @param transaction New transaction
+     * @param transaction Old transaction
      */
-    async function regenerateSnapshots(type: string, transaction: BudgetTransaction) {
+    async function regenerateSnapshots(type: string, transaction: BudgetTransaction, oldTransaction?: BudgetTransaction) {
         console.log('budget-store.regenerate-snapshots')
-        o.regenerate(type, transaction)
+        o.regenerate(type, transaction, oldTransaction)
     }
 
     const findIndexById = (data, id) => {
@@ -186,11 +188,13 @@ class SnapshotsOperation {
     snapshots: any
     budgets: any
     balances: any
+    transactionStore: any
 
     constructor(options: {budgets, balances, snapshots}) {
         this.budgets = options.budgets
         this.balances = options.balances
         this.snapshots = options.snapshots
+        this.transactionStore = useTransactionStore()
     }
 
     generate() {
@@ -274,13 +278,13 @@ class SnapshotsOperation {
      * @param type [allocation, update, remove]
      * @param transaction BudgetTransaction
      */
-    regenerate(type: string, transaction: BudgetTransaction) {
+    regenerate(type: string, transaction: BudgetTransaction, oldTransaction?) {
+        if (type == 'allocation') {
+            this.runningBalance(this.snapshots.value, transaction, oldTransaction)
+        }
+
         this.snapshots.value.forEach(row => {
             switch(type) {
-                case 'allocation': {
-                    this.runningBalance(row, transaction)
-                    break
-                }
                 case 'update': {
                     this.changeBudgetTitle(row, transaction)
                     break
@@ -305,49 +309,93 @@ class SnapshotsOperation {
 
         return index
     }
+
+    private calculate = {
+        '+': function(a: number, b: number) { return a + b },
+        '-': function(a: number, b: number) { return a - b }
+    }
+
+    cumulative(month: string, budget_id: number) {
+        let result = 0
+
+        this.transactionStore.transactions.forEach(txn => {
+            if (budget_id == txn.budget_id && month == txn.budget_month) {
+                const amount = Math.abs(txn.amount)
+                const operator = txn.transaction_type == 'Inflow' ? '+' : '-'
+                result = this.calculate[operator](result, amount)
+            }
+        })
+
+        return result
+    }
     
     /**
      * Calculate running balance on each snapshot
      * 
-     * @param row 
+     * @param snapshots
      * @param transaction { budget_id, budget_month, transaction_type, amount }
+     * @param oldTransaction { budget_id, budget_month, transaction_type, amount }
      */
-    runningBalance(row, transaction: BudgetTransaction) {
+    runningBalance(snapshots, transaction: BudgetTransaction, oldTransaction: BudgetTransaction) {
         console.log('budget-store.snapshot-operation.running-balance')
 
-        const snapshot = {
-            budget_id: transaction.budget_id,
-            title: '',
-            assigned: 0,
-            available: 0
-        }
+        const data: any = []
+        let available = {}
+        
+        snapshots.forEach(row => {
+            let months = { month: row.month, budgets: [] = [] }
+            
+            row.budgets.forEach((budget: Budget, index: number) => {
+                let cBudget: Budget = <Budget>{} // Temporary budget container
+                cBudget.budget_id = budget.budget_id
+                cBudget.title = budget.title
 
-        const calculate = {
-            '+': function(a: number, b: number) { return a + b },
-            '-': function(a: number, b: number) { return a - b }
-        }
+                const ava = parseFloat(available[budget.title]) ? parseFloat(available[budget.title]) : 0
 
-        const operator = transaction.transaction_type == 'Inflow' ? '+' : '-'
+                const avail = ava + this.cumulative(row.month, cBudget.budget_id)
+                available[budget.title] = avail
 
-        if (row.month == transaction.budget_month) {
-            row.budgets.forEach((budget, index) => {
-                if (budget.budget_id == transaction.budget_id) {
-                    snapshot.title = budget.title
-                    snapshot.assigned = calculate[operator](budget.assigned, transaction.amount)
-                    snapshot.available = calculate[operator](budget.available, transaction.amount)
-                    row.budgets[index] = snapshot
-                }
+                console.log(ava, avail, cBudget.title)
+
+
+                cBudget.assigned = budget.assigned
+                cBudget.available = avail
+
+                months.budgets.push(cBudget)
             })
-        } else if (row.month > transaction.budget_month) {
-            row.budgets.forEach((budget, index) => {
-                if (budget.budget_id == transaction.budget_id) {
-                    snapshot.title = budget.title
-                    snapshot.assigned = budget.assigned
-                    snapshot.available = calculate[operator](budget.available, transaction.amount)
-                    row.budgets[index] = snapshot
-                }
-            })
-        }
+
+            // console.log(available)
+
+            data.push(months)
+
+
+
+            // } else {
+                // console.log('RECALCULATE SNAPSHOTS')
+                // // Recalculation of assigned and running balance from the specified month to the set future months
+                // if (row.month == transaction.budget_month) {
+                //     row.budgets.forEach((budget, index) => {
+                //         if (budget.budget_id == transaction.budget_id) {
+                //             snapshot.title = budget.title
+                //             snapshot.assigned = this.calculate[operator](budget.assigned, transaction.amount)
+                //             snapshot.available = this.calculate[operator](budget.available, transaction.amount)
+                //             row.budgets[index] = snapshot
+                //         }
+                //     })
+                // } else if (row.month > transaction.budget_month) {
+                //     row.budgets.forEach((budget, index) => {
+                //         if (budget.budget_id == transaction.budget_id) {
+                //             snapshot.title = budget.title
+                //             snapshot.assigned = budget.assigned
+                //             snapshot.available = this.calculate[operator](budget.available, transaction.amount)
+                //             row.budgets[index] = snapshot
+                //         }
+                //     })
+                // }
+            // }
+        })
+
+        this.snapshots.value = data
     }
 
     /**

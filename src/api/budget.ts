@@ -85,6 +85,16 @@ export class BudgetApi {
             return { ok: false, message: error }
         }
     }
+
+    async getTransactions() {
+        try {
+            const response = await fetch('http://localhost:8787/api/transactions')
+            const result = await response.json()
+            return result.transactions
+        } catch (error) {
+            console.error(error)
+        }
+    }
     
     async createBudget(title: string) {
         try {

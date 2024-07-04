@@ -12,7 +12,7 @@
                     </template>
                 </Toolbar>
 
-                <DataTable stateStorage="session" stateKey="dt-state-account-transactions-session" ref="dt" stripedRows :value="store.transactions" rowGroupMode="subheader" groupRowsBy="transaction_date" :rowClass="rowClass">
+                <DataTable stateStorage="session" stateKey="dt-state-account-transactions-session" ref="dt" stripedRows :value="store.accountTransactions" rowGroupMode="subheader" groupRowsBy="transaction_date" :rowClass="rowClass">
                     <Column field="transaction_date" header="Date"></Column>
                     <Column field="payee">
                         <template #body="slotProps">
@@ -20,7 +20,7 @@
                             <div><small>{{ slotProps.data.budget_title }}</small></div>
                         </template>
                     </Column>
-                    <Column field="amount" header="Amount" headerStyle="width: 7rem; text-align: right" bodyStyle="text-align: right">
+                    <Column field="amount" headerStyle="width: 7rem; text-align: right" bodyStyle="text-align: right">
                         <template #body="slotProps">
                             <div :class="transactionColor(slotProps.data.amount)">{{ formatCurrency(slotProps.data.amount) }}</div>
                             <div><small>{{ slotProps.data.memo }}</small></div>
@@ -112,10 +112,12 @@ const edit = (txn: Transaction) => {
     store.transaction.account_id = oTxn.account_id
     store.transaction.transaction_type = oTxn.transaction_type
     store.transaction.transaction_date = oTxn.transaction_date
-    store.transaction.amount = oTxn.amount
+    store.transaction.amount = Math.abs(oTxn.amount) // Ensure absolute number
     store.transaction.budget_month = oTxn.budget_month
     store.transaction.payee = oTxn.payee
     store.transaction.memo = oTxn.memo
+
+    store.setOldTransaction(oTxn)
 
     transactionDialog.value = true;
 }

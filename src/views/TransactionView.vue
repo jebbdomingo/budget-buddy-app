@@ -40,7 +40,6 @@ import { transactionDialog } from '../stores/state'
 import { useBudgetStore } from '../stores/budget'
 import { useAccountStore } from '../stores/account'
 import { useTransactionStore } from '../stores/transaction'
-import { type Account, type Budget } from '../types/types'
 
 const accountStore = useAccountStore()
 const budgetStore = useBudgetStore()
@@ -48,8 +47,6 @@ const transactionStore = useTransactionStore()
 
 const toast = useToast();
 const transactionTypes = ref(['Outflow', 'Inflow'])
-const selectedBudget = ref(7)
-const selectedAccount = ref<Account>()
 
 const showToast = (result: boolean, message: string) => {
     if (!result) {
@@ -60,11 +57,6 @@ const showToast = (result: boolean, message: string) => {
 }
 
 async function handleSave() {
-    const oDate = new Date()
-    const oMonth = oDate.getMonth() + 1
-    
-    transactionStore.transaction.budget_month = oMonth + '-' + oDate.getFullYear()
-    
     let result
 
     if (transactionStore.transaction.transaction_id) {
@@ -84,13 +76,15 @@ async function handleSave() {
         budget_month: transactionStore.transaction.budget_month,
         transaction_type: transactionStore.transaction.transaction_type,
         amount: transactionStore.transaction.amount
-    })
+    }, transactionStore.oldTransaction)
 
-    accountStore.recalculateAccounts({
-        transaction_type: transactionStore.transaction.transaction_type,
-        account_id: transactionStore.transaction.account_id,
-        amount: transactionStore.transaction.amount
-    })
+    // accountStore.recalculateAccounts({
+    //     transaction_type: transactionStore.transaction.transaction_type,
+    //     account_id: transactionStore.transaction.account_id,
+    //     amount: transactionStore.transaction.amount
+    // })
+
+    transactionStore.recalculateAccount()
 
     // Reset reactives
     transactionStore.reset()

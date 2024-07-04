@@ -2,6 +2,7 @@ import { ref, watch, toValue, reactive } from 'vue'
 import { defineStore } from 'pinia'
 import { BudgetApi } from '../api/budget'
 import { type Transaction } from '../types/types'
+import { useAccountStore } from './account'
 
 const api = new BudgetApi
 const account_id = ref(0)
@@ -10,7 +11,7 @@ const getLocalStorageName = () => {
     return 'account-transactions:' + account_id.value
 }
 
-const setTransactionType = (row: Transaction) => {
+const normalize = (row: Transaction) => {
     let amount: number
     let type: string
 
@@ -26,12 +27,16 @@ const setTransactionType = (row: Transaction) => {
     row.transaction_type = type
     delete row.debit
     delete row.credit
+
+    const date = new Date(row.transaction_date)
+    row.transaction_date = date.toLocaleDateString("en-US")
     
     return row
 }
 
 export const useTransactionStore = defineStore('transaction', () => {
     const transactions = ref<Transaction[]>([])
+    const accountTransactions = ref<Transaction[]>([])
 
     const initialState = {
         transaction_id: 0,
@@ -46,22 +51,40 @@ export const useTransactionStore = defineStore('transaction', () => {
     }
     
     const transaction = reactive<Transaction>(initialState)
+    const oldTransaction = {}
 
-    async function initialize(id: any) {
-        account_id.value = id
-        const res = await api.getTransactionsByType('account', account_id.value)
+    async function initialize(id?: any) {
+        if (typeof id !== 'undefined') {
+            account_id.value = id
+            const res = await api.getTransactionsByType('account', account_id.value)
+            setAccountTransactions(res)
+        }
+
+        const res = await api.getTransactions()
         setTransactions(res)
+    }
+
+    function setAccountTransactions(data) {
+        if (data.error) {
+            // Fetch from local storage when offline
+            accountTransactions.value = JSON.parse(localStorage.getItem(getLocalStorageName()))
+        } else {
+            accountTransactions.value = data.map(normalize)
+
+            // Cache account's transactions
+            localStorage.setItem(getLocalStorageName(), JSON.stringify(toValue(accountTransactions)))
+        }
     }
 
     function setTransactions(data) {
         if (data.error) {
             // Fetch from local storage when offline
-            transactions.value = JSON.parse(localStorage.getItem(getLocalStorageName()))
+            transactions.value = JSON.parse(localStorage.getItem('transactions'))
         } else {
-            transactions.value = data.map(setTransactionType)
+            transactions.value = data.map(normalize)
 
-            // Cache transactions
-            localStorage.setItem(getLocalStorageName(), JSON.stringify(toValue(transactions)))
+            // Cache budgets
+            localStorage.setItem('transactions', JSON.stringify(toValue(transactions)))
         }
     }
 
@@ -70,20 +93,49 @@ export const useTransactionStore = defineStore('transaction', () => {
 
         if (ok) {
             const result = transactions.value.filter(val => val.transaction_id !== transaction.transaction_id)
-            setTransactions(result)
+            setAccountTransactions(result)
         }
 
         return ok
     }
 
     async function update() {
-        const { ok } = await api.updateTransaction(account.account_id, account.title)
+        const oDate = new Date(transaction.transaction_date)
+        const oMonth = oDate.getMonth() + 1
+    
+        transaction.budget_month = oMonth + '-' + oDate.getFullYear()
+        transaction.transaction_date = oDate.toLocaleDateString("en-US")
+
+        const { ok } = await api.updateTransaction(transaction)
 
         if (ok) {
-            transactions.value.forEach((acct: Account, index: number) => {
-                if (acct.account_id == account.account_id) {
-                    acct.title = account.title
-                    accounts[index] = acct
+            const amount = transaction.transaction_type == 'Outflow' ? -transaction.amount : transaction.amount
+
+            transactions.value.forEach((txn: Transaction, index: number) => {
+                if (txn.transaction_id == transaction.transaction_id) {
+                    txn.account_id = transaction.account_id
+                    txn.budget_id = transaction.budget_id
+                    txn.budget_month = transaction.budget_month
+                    txn.amount = amount
+                    txn.payee = transaction.payee
+                    txn.memo = transaction.memo
+                    txn.transaction_date = transaction.transaction_date
+                    txn.transaction_type = transaction.transaction_type
+                    transactions[index] = txn
+                }
+            })
+            
+            accountTransactions.value.forEach((txn: Transaction, index: number) => {
+                if (txn.transaction_id == transaction.transaction_id) {
+                    txn.account_id = transaction.account_id
+                    txn.budget_id = transaction.budget_id
+                    txn.budget_month = transaction.budget_month
+                    txn.amount = amount
+                    txn.payee = transaction.payee
+                    txn.memo = transaction.memo
+                    txn.transaction_date = transaction.transaction_date
+                    txn.transaction_type = transaction.transaction_type
+                    accountTransactions[index] = txn
                 }
             })
         }
@@ -94,10 +146,18 @@ export const useTransactionStore = defineStore('transaction', () => {
     }
     
     async function create() {
+        const oDate = new Date(transaction.transaction_date)
+        const oMonth = oDate.getMonth() + 1
+    
+        transaction.budget_month = oMonth + '-' + oDate.getFullYear()
+        transaction.transaction_date = oDate.toLocaleDateString("en-US")
+
         const { ok, result } = await api.createTransaction(transaction)
 
         if (ok) {
-            transactions.value.push(setTransactionType(result))
+            const txn = normalize(result)
+            transactions.value.push(txn)
+            accountTransactions.value.push(txn)
         }
 
         reset()
@@ -108,12 +168,53 @@ export const useTransactionStore = defineStore('transaction', () => {
     function reset() {
         Object.assign(transaction, initialState)
     }
+    
+    function setOldTransaction(txn) {
+        Object.assign(oldTransaction, txn)
 
+        console.log(oldTransaction)
+    }
+
+    async function recalculateAccount() {
+        const calculate = {
+            '+': function(a: number, b: number) { return a + b },
+            '-': function(a: number, b: number) { return a - b }
+        }
+
+        const operator = transaction.transaction_type == 'Inflow' ? '+' : '-'
+
+        let amount = 0
+
+        transactions.value.forEach(row => {
+            amount += row.amount
+        })
+
+        const store = useAccountStore()
+
+        store.accounts.forEach(row => {
+            if (row.account_id == account_id.value) {
+                row.balance = amount
+            }
+        })
+    
+        // accounts.value.forEach(row => {
+        //     if (row.account_id == transaction.account_id) {
+        //         row.balance = calculate[operator](row.balance, transaction.amount)
+        //     }
+        // })
+    }
+
+    watch(accountTransactions, (newValue) => {
+        // Store updated transactions in local storage
+        console.log('transaction-store.watch:account-transactions')
+        localStorage.setItem(getLocalStorageName(), JSON.stringify(toValue(newValue)))
+    }, { deep: true })
+    
     watch(transactions, (newValue) => {
         // Store updated transactions in local storage
         console.log('transaction-store.watch:transactions')
-        localStorage.setItem(getLocalStorageName(), JSON.stringify(toValue(newValue)))
+        localStorage.setItem('transactions', JSON.stringify(toValue(newValue)))
     }, { deep: true })
 
-    return { transaction, transactions, initialize, setTransactions, update, create, archive, reset }
+    return { transaction, oldTransaction, setOldTransaction, accountTransactions, transactions, initialize, setAccountTransactions, update, create, archive, reset, recalculateAccount }
 })
