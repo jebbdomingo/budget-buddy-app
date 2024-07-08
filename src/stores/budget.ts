@@ -1,7 +1,7 @@
 import { ref, watch, watchEffect, toValue } from 'vue'
 import { defineStore } from 'pinia'
 import { BudgetApi } from '../api/budget'
-import { type Budget, type BudgetTransaction } from '../types/types'
+import { type Budget, type BudgetTransaction, type Transaction } from '../types/types'
 import { useTransactionStore } from './transaction'
 
 const api = new BudgetApi
@@ -77,13 +77,11 @@ export const useBudgetStore = defineStore('budget', () => {
 
         const index = findIndexById(toValue(budgets), budget.budget_id)
         
-        if (index) {
-            // Update reactive budgets
-            budgets.value[index].title = budget.title
+        // Update reactive budgets
+        budgets.value[index].title = budget.title
 
-            // Update reactive snapshots
-            regenerateSnapshots('update', { budget_id: budget.budget_id, title: budget.title })
-        }
+        // Update reactive snapshots
+        regenerateSnapshots('update', { budget_id: budget.budget_id, title: budget.title })
 
         return ok
     }
@@ -108,6 +106,11 @@ export const useBudgetStore = defineStore('budget', () => {
         return ok
     }
 
+    function getBudget(id: number) {
+        const index = findIndexById(budgets.value, id)
+        return budgets.value[index]
+    }
+
     /**
      * Dynamically re-calculate all the budget snapshots for presentation
      * There are three (3) reasons for snapshots to change
@@ -116,12 +119,10 @@ export const useBudgetStore = defineStore('budget', () => {
      *  3. remove - Budget archiving
      * 
      * @param type Type of transaction [allocation, update, remove]
-     * @param transaction New transaction
-     * @param transaction Old transaction
      */
-    async function regenerateSnapshots(type: string, transaction: BudgetTransaction, oldTransaction?: BudgetTransaction) {
+    async function regenerateSnapshots(type: string, transaction?: BudgetTransaction) {
         console.log('budget-store.regenerate-snapshots')
-        o.regenerate(type, transaction, oldTransaction)
+        o.regenerate(type, transaction)
     }
 
     const findIndexById = (data, id) => {
@@ -178,7 +179,7 @@ export const useBudgetStore = defineStore('budget', () => {
         localStorage.setItem('snapshots', JSON.stringify(toValue(newValue)))
     }, { deep: true })
 
-    return { budgets, snapshots, snapshot, initialize, setBudgets, updateBudget, createBudget, archiveBudget, regenerateSnapshots, snapshotSelector }
+    return { budgets, snapshots, snapshot, initialize, getBudget, setBudgets, updateBudget, createBudget, archiveBudget, regenerateSnapshots, snapshotSelector }
 })
 
 /**
@@ -278,9 +279,9 @@ class SnapshotsOperation {
      * @param type [allocation, update, remove]
      * @param transaction BudgetTransaction
      */
-    regenerate(type: string, transaction: BudgetTransaction, oldTransaction?) {
+    regenerate(type: string, transaction: BudgetTransaction) {
         if (type == 'allocation') {
-            this.runningBalance(this.snapshots.value, transaction, oldTransaction)
+            this.runningBalance()
         }
 
         this.snapshots.value.forEach(row => {
@@ -331,18 +332,14 @@ class SnapshotsOperation {
     
     /**
      * Calculate running balance on each snapshot
-     * 
-     * @param snapshots
-     * @param transaction { budget_id, budget_month, transaction_type, amount }
-     * @param oldTransaction { budget_id, budget_month, transaction_type, amount }
      */
-    runningBalance(snapshots, transaction: BudgetTransaction, oldTransaction: BudgetTransaction) {
+    runningBalance() {
         console.log('budget-store.snapshot-operation.running-balance')
 
         const data: any = []
         let available = {}
         
-        snapshots.forEach(row => {
+        this.snapshots.value.forEach(row => {
             let months = { month: row.month, budgets: [] = [] }
             
             row.budgets.forEach((budget: Budget, index: number) => {
@@ -351,12 +348,8 @@ class SnapshotsOperation {
                 cBudget.title = budget.title
 
                 const ava = parseFloat(available[budget.title]) ? parseFloat(available[budget.title]) : 0
-
                 const avail = ava + this.cumulative(row.month, cBudget.budget_id)
                 available[budget.title] = avail
-
-                console.log(ava, avail, cBudget.title)
-
 
                 cBudget.assigned = budget.assigned
                 cBudget.available = avail
@@ -364,35 +357,7 @@ class SnapshotsOperation {
                 months.budgets.push(cBudget)
             })
 
-            // console.log(available)
-
             data.push(months)
-
-
-
-            // } else {
-                // console.log('RECALCULATE SNAPSHOTS')
-                // // Recalculation of assigned and running balance from the specified month to the set future months
-                // if (row.month == transaction.budget_month) {
-                //     row.budgets.forEach((budget, index) => {
-                //         if (budget.budget_id == transaction.budget_id) {
-                //             snapshot.title = budget.title
-                //             snapshot.assigned = this.calculate[operator](budget.assigned, transaction.amount)
-                //             snapshot.available = this.calculate[operator](budget.available, transaction.amount)
-                //             row.budgets[index] = snapshot
-                //         }
-                //     })
-                // } else if (row.month > transaction.budget_month) {
-                //     row.budgets.forEach((budget, index) => {
-                //         if (budget.budget_id == transaction.budget_id) {
-                //             snapshot.title = budget.title
-                //             snapshot.assigned = budget.assigned
-                //             snapshot.available = this.calculate[operator](budget.available, transaction.amount)
-                //             row.budgets[index] = snapshot
-                //         }
-                //     })
-                // }
-            // }
         })
 
         this.snapshots.value = data

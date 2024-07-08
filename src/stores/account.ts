@@ -1,7 +1,8 @@
 import { ref, watch, reactive, computed, toValue } from 'vue'
 import { defineStore } from 'pinia'
 import { BudgetApi } from '../api/budget'
-import { type Account, type AccountTransaction } from '../types/types'
+import { type Account } from '../types/types'
+import { useTransactionStore } from './transaction'
 
 const api = new BudgetApi
 
@@ -65,18 +66,28 @@ export const useAccountStore = defineStore('account', () => {
         return ok
     }
 
-    function recalculateAccounts(transaction: AccountTransaction, oldTransaction: AccountTransaction) {
+    function recalculateAccounts() {
         const calculate = {
             '+': function(a: number, b: number) { return a + b },
             '-': function(a: number, b: number) { return a - b }
         }
 
-        const operator = transaction.transaction_type == 'Inflow' ? '+' : '-'
-    
+        const transactionStore = useTransactionStore()
+        let totals = {}
+
         accounts.value.forEach(row => {
-            if (row.account_id == transaction.account_id) {
-                row.balance = calculate[operator](row.balance, transaction.amount)
-            }
+            transactionStore.transactions.forEach(txn => {
+                const operator = txn.transaction_type == 'Inflow' ? '+' : '-'
+
+                if (row.account_id == txn.account_id) {
+                    const ava = parseFloat(totals[row.account_id]) ? parseFloat(totals[row.account_id]) : 0
+                    const amount = Math.abs(txn.amount)
+                    const avail = calculate[operator](ava, amount)
+                    totals[txn.account_id] = avail
+                }
+            })
+
+            row.balance = totals[row.account_id]
         })
     }
 

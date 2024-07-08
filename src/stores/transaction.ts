@@ -1,8 +1,8 @@
 import { ref, watch, toValue, reactive } from 'vue'
 import { defineStore } from 'pinia'
 import { BudgetApi } from '../api/budget'
-import { type Transaction } from '../types/types'
-import { useAccountStore } from './account'
+import { type Budget, type Transaction } from '../types/types'
+import { useBudgetStore } from './budget'
 
 const api = new BudgetApi
 const account_id = ref(0)
@@ -28,8 +28,13 @@ const normalize = (row: Transaction) => {
     delete row.debit
     delete row.credit
 
+    // Transaction date
     const date = new Date(row.transaction_date)
     row.transaction_date = date.toLocaleDateString("en-US")
+
+    // Budget object
+    const budgetStore = useBudgetStore()
+    row.budget = budgetStore.getBudget(row.budget_id)
     
     return row
 }
@@ -37,10 +42,11 @@ const normalize = (row: Transaction) => {
 export const useTransactionStore = defineStore('transaction', () => {
     const transactions = ref<Transaction[]>([])
     const accountTransactions = ref<Transaction[]>([])
+    const transactionDialog = ref<boolean>(false)
 
     const initialState = {
         transaction_id: 0,
-        budget_id: 0,
+        budget: <Budget>{},
         account_id: 0,
         transaction_type: 'Outflow',
         transaction_date: '',
@@ -50,8 +56,7 @@ export const useTransactionStore = defineStore('transaction', () => {
         memo: ''
     }
     
-    const transaction = reactive<Transaction>(initialState)
-    const oldTransaction = {}
+    const transaction = reactive<Transaction>(<Transaction>{ transaction_type: 'Outflow' })
 
     async function initialize(id?: any) {
         if (typeof id !== 'undefined') {
@@ -114,7 +119,7 @@ export const useTransactionStore = defineStore('transaction', () => {
             transactions.value.forEach((txn: Transaction, index: number) => {
                 if (txn.transaction_id == transaction.transaction_id) {
                     txn.account_id = transaction.account_id
-                    txn.budget_id = transaction.budget_id
+                    txn.budget = transaction.budget
                     txn.budget_month = transaction.budget_month
                     txn.amount = amount
                     txn.payee = transaction.payee
@@ -127,8 +132,9 @@ export const useTransactionStore = defineStore('transaction', () => {
             
             accountTransactions.value.forEach((txn: Transaction, index: number) => {
                 if (txn.transaction_id == transaction.transaction_id) {
+                    // console.log(transaction)
                     txn.account_id = transaction.account_id
-                    txn.budget_id = transaction.budget_id
+                    txn.budget = transaction.budget
                     txn.budget_month = transaction.budget_month
                     txn.amount = amount
                     txn.payee = transaction.payee
@@ -168,41 +174,6 @@ export const useTransactionStore = defineStore('transaction', () => {
     function reset() {
         Object.assign(transaction, initialState)
     }
-    
-    function setOldTransaction(txn) {
-        Object.assign(oldTransaction, txn)
-
-        console.log(oldTransaction)
-    }
-
-    async function recalculateAccount() {
-        const calculate = {
-            '+': function(a: number, b: number) { return a + b },
-            '-': function(a: number, b: number) { return a - b }
-        }
-
-        const operator = transaction.transaction_type == 'Inflow' ? '+' : '-'
-
-        let amount = 0
-
-        transactions.value.forEach(row => {
-            amount += row.amount
-        })
-
-        const store = useAccountStore()
-
-        store.accounts.forEach(row => {
-            if (row.account_id == account_id.value) {
-                row.balance = amount
-            }
-        })
-    
-        // accounts.value.forEach(row => {
-        //     if (row.account_id == transaction.account_id) {
-        //         row.balance = calculate[operator](row.balance, transaction.amount)
-        //     }
-        // })
-    }
 
     watch(accountTransactions, (newValue) => {
         // Store updated transactions in local storage
@@ -216,5 +187,5 @@ export const useTransactionStore = defineStore('transaction', () => {
         localStorage.setItem('transactions', JSON.stringify(toValue(newValue)))
     }, { deep: true })
 
-    return { transaction, oldTransaction, setOldTransaction, accountTransactions, transactions, initialize, setAccountTransactions, update, create, archive, reset, recalculateAccount }
+    return { transactionDialog, transaction, accountTransactions, transactions, initialize, setAccountTransactions, update, create, archive, reset }
 })

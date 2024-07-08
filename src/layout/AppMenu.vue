@@ -2,7 +2,7 @@
 import { ref } from 'vue'
 import AppMenuItem from './AppMenuItem.vue'
 import TransactionView from '../views/TransactionView.vue'
-import { transactionDialog } from '../stores/state'
+import { useTransactionStore } from '../stores/transaction'
 
 const model = ref([
     {
@@ -11,7 +11,7 @@ const model = ref([
             { label: 'Dashboard', icon: 'pi pi-fw pi-home', to: '/' },
             { label: 'Accounts', icon: 'pi pi-fw pi-dollar', to: '/accounts' },
             { label: 'Transaction', icon: 'pi pi-fw pi-plus-circle', command: () => {
-                transactionDialog.value = true
+                useTransactionStore().transactionDialog = true
             } }
         ]
     }

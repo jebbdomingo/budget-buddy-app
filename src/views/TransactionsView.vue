@@ -7,7 +7,7 @@
                     <template v-slot:start>
                         <div class="my-2">
                             <Button label="Accounts" icon="pi pi-angle-left" class="mr-2" severity="secondary" @click="back()" />
-                            <Button label="Transaction" icon="pi pi-plus" class="mr-2" severity="primary" @click="transactionDialog = true" />
+                            <Button label="Transaction" icon="pi pi-plus" class="mr-2" severity="primary" @click="store.transactionDialog = true" />
                         </div>
                     </template>
                 </Toolbar>
@@ -17,7 +17,7 @@
                     <Column field="payee">
                         <template #body="slotProps">
                             <div>{{ slotProps.data.payee }}</div>
-                            <div><small>{{ slotProps.data.budget_title }}</small></div>
+                            <div><small>{{ slotProps.data.budget.title }}</small></div>
                         </template>
                     </Column>
                     <Column field="amount" headerStyle="width: 7rem; text-align: right" bodyStyle="text-align: right">
@@ -61,15 +61,12 @@ import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
-import { useToast } from 'primevue/usetoast'
 import TransactionView from './TransactionView.vue'
-import { transactionDialog } from '../stores/state'
 import { useTransactionStore } from '../stores/transaction'
 import { type Transaction } from '../types/types'
 
 const route = useRoute()
 const router = useRouter()
-const toast = useToast()
 const dt = ref(null)
 const store = useTransactionStore()
 
@@ -108,7 +105,7 @@ const edit = (txn: Transaction) => {
     const oTxn = {...txn}
 
     store.transaction.transaction_id = oTxn.transaction_id
-    store.transaction.budget_id = oTxn.budget_id
+    store.transaction.budget = oTxn.budget
     store.transaction.account_id = oTxn.account_id
     store.transaction.transaction_type = oTxn.transaction_type
     store.transaction.transaction_date = oTxn.transaction_date
@@ -117,9 +114,7 @@ const edit = (txn: Transaction) => {
     store.transaction.payee = oTxn.payee
     store.transaction.memo = oTxn.memo
 
-    store.setOldTransaction(oTxn)
-
-    transactionDialog.value = true;
+    store.transactionDialog = true;
 }
 
 onMounted(async() => {

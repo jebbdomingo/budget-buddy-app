@@ -1,6 +1,6 @@
 <template>
     <div class="card flex flex-wrap gap-3 p-fluid">
-        <Dialog v-model:visible="transactionDialog" modal header="Add Transaction" :style="{ width: '25rem' }">
+        <Dialog v-model:visible="transactionStore.transactionDialog" modal header="Transaction" :style="{ width: '25rem' }">
             <div class="flex align-items-center gap-3 mb-5">
                 <InputGroup>
                     <InputGroupAddon>₱</InputGroupAddon>
@@ -14,7 +14,7 @@
                 <InputText placeholder="Payee" v-model="transactionStore.transaction.payee" class="w-full" />
             </div>
             <div class="flex align-items-center gap-3 mb-5">
-                <Dropdown v-model="transactionStore.transaction.budget_id" :options="budgetStore.budgets" filter optionLabel="title" optionValue="budget_id" placeholder="Budget" class="w-full"></Dropdown>
+                <Dropdown v-model="transactionStore.transaction.budget" :options="budgetStore.budgets" filter optionLabel="title" placeholder="Budget" class="w-full"></Dropdown>
             </div>
             <div class="flex align-items-center gap-3 mb-5">
                 <Dropdown v-model="transactionStore.transaction.account_id" :options="accountStore.accounts" filter optionLabel="title" optionValue="account_id" placeholder="Account" class="w-full"></Dropdown>
@@ -26,7 +26,7 @@
                 <InputText placeholder="Enter a memo..." v-model="transactionStore.transaction.memo" class="w-full" />
             </div>
             <div class="flex justify-content-end gap-2">
-                <Button type="button" label="Cancel" severity="secondary" @click="transactionDialog = false"></Button>
+                <Button type="button" label="Cancel" severity="secondary" @click="handleCancel"></Button>
                 <Button type="button" label="Save" @click="handleSave"></Button>
             </div>
         </Dialog>
@@ -36,7 +36,6 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { useToast } from 'primevue/usetoast'
-import { transactionDialog } from '../stores/state'
 import { useBudgetStore } from '../stores/budget'
 import { useAccountStore } from '../stores/account'
 import { useTransactionStore } from '../stores/transaction'
@@ -56,6 +55,13 @@ const showToast = (result: boolean, message: string) => {
     }
 }
 
+async function handleCancel() {
+    // Reset transaction reactive
+    transactionStore.reset()
+
+    transactionStore.transactionDialog = false
+}
+
 async function handleSave() {
     let result
 
@@ -69,24 +75,12 @@ async function handleSave() {
         showToast(result, 'An error has occured')
     }
 
-    transactionDialog.value = false
+    transactionStore.transactionDialog = false
 
-    budgetStore.regenerateSnapshots('allocation', {
-        budget_id: transactionStore.transaction.budget_id,
-        budget_month: transactionStore.transaction.budget_month,
-        transaction_type: transactionStore.transaction.transaction_type,
-        amount: transactionStore.transaction.amount
-    }, transactionStore.oldTransaction)
+    budgetStore.regenerateSnapshots('allocation')
+    accountStore.recalculateAccounts()
 
-    // accountStore.recalculateAccounts({
-    //     transaction_type: transactionStore.transaction.transaction_type,
-    //     account_id: transactionStore.transaction.account_id,
-    //     amount: transactionStore.transaction.amount
-    // })
-
-    transactionStore.recalculateAccount()
-
-    // Reset reactives
+    // Reset transaction reactive
     transactionStore.reset()
 }
 </script>

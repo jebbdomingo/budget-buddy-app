@@ -1,6 +1,6 @@
 export interface Transaction {
 	transaction_id: number
-    budget_id: number
+    budget: Budget
     account_id: number
     transaction_type: string
     transaction_date: string
