@@ -320,7 +320,7 @@ class SnapshotsOperation {
         let result = 0
 
         this.transactionStore.transactions.forEach(txn => {
-            if (budget_id == txn.budget_id && month == txn.budget_month) {
+            if (budget_id == txn.budget.budget_id && month == txn.budget_month) {
                 const amount = Math.abs(txn.amount)
                 const operator = txn.transaction_type == 'Inflow' ? '+' : '-'
                 result = this.calculate[operator](result, amount)
