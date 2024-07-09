@@ -27,6 +27,13 @@ export interface Budget {
 	title: string
 }
 
+export interface Allocation {
+	allocation_id: number
+	budget_id: number
+	budget_month: string
+	amount: number
+}
+
 export interface BudgetTransaction {
 	budget_id: number
     transaction_type: string

@@ -35,6 +35,13 @@
                                 label="Edit" icon="pi pi-check" menuButtonIcon="pi pi-cog" @click="edit(slotProps.data)" severity="secondary"
                                 :model="[
                                     {
+                                        label: 'Assign',
+                                        icon: 'pi pi-wallet',
+                                        command: () => {
+                                            assign(slotProps.data)
+                                        }
+                                    },
+                                    {
                                         label: 'Archive',
                                         icon: 'pi pi-trash',
                                         command: () => {
@@ -72,6 +79,19 @@
                     <Button label="Yes" icon="pi pi-check" text @click="handleArchive" />
                 </template>
             </Dialog>
+
+            <Dialog v-model:visible="assignDialog" modal header="Assign a Budget" :style="{ width: '25rem' }">
+                <div class="flex align-items-center gap-3 mb-5">
+                    <InputGroup>
+                        <InputGroupAddon>₱</InputGroupAddon>
+                        <InputNumber placeholder="Amount" v-model="budget.assigned" inputId="minmaxfraction" :minFractionDigits="2" :maxFractionDigits="5" />
+                    </InputGroup>
+                </div>
+                <div class="flex justify-content-end gap-2">
+                    <Button type="button" label="Cancel" severity="secondary" @click="assignDialog = false"></Button>
+                    <Button type="button" label="Save" @click="handleAssign"></Button>
+                </div>
+            </Dialog>
         </div>
     </template>
 
@@ -86,6 +106,8 @@ import { useBudgetStore } from '../stores/budget'
 import { type Budget } from '../types/types'
 import { useToast } from 'primevue/usetoast'
 
+import { useTransactionStore } from '../stores/transaction'
+
 const store = useBudgetStore()
 const toast = useToast();
 const date = ref(new Date())
@@ -94,6 +116,7 @@ const today = new Date()
 today.setMonth(today.getMonth() + 2)
 const maxDate = ref(today)
 const budgetDialog = ref(false)
+const assignDialog = ref(false)
 const archiveDialog = ref(false)
 
 const budget = reactive<Budget>({
@@ -116,7 +139,8 @@ const severity = (value) => {
 }
 
 const formatCurrency = (value: any) => {
-    return value.toLocaleString('en-US', { style: 'currency', currency: 'PHP' })
+    let result: number = value ? value : 0
+    return result.toLocaleString('en-US', { style: 'currency', currency: 'PHP' })
 }
 
 const showToast = (result: boolean, message: string) => {
@@ -132,6 +156,37 @@ const edit = (budg: Budget) => {
     budget.budget_id = oBudget.budget_id
     budget.title = oBudget.title
     budgetDialog.value = true
+}
+
+const assign = (budg: Budget) => {
+    const oBudget = {...budg}
+
+    budget.budget_id = oBudget.budget_id
+    budget.title = oBudget.title
+    budget.assigned = oBudget.assigned
+    budget.available = oBudget.available
+
+    console.log(oBudget)
+
+    assignDialog.value = true
+}
+
+function handleAssign() {
+    console.log('handleAssign()')
+
+    const oDate = new Date(date.value)
+    const oMonth = oDate.getMonth() + 1
+    budget.month = oMonth + '-' + oDate.getFullYear()
+    
+    store.assign(budget)
+
+    budget.budget_id = 0
+    budget.title = ''
+    budget.assigned = ''
+    budget.available = ''
+    budget.month = ''
+
+    assignDialog.value = false
 }
 
 async function handleSave() {
@@ -179,5 +234,8 @@ const handleArchive = async () => {
 
 onMounted(() => {
     store.snapshotSelector(date)
+
+    const transactionStore = useTransactionStore()
+    transactionStore.initialize()
 })
 </script>

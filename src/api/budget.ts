@@ -42,6 +42,16 @@ export class BudgetApi {
         }
     }
 
+    async getAllocations() {
+        try {
+            const response = await fetch('http://localhost:8787/api/allocations')
+            const result = await response.json()
+            return result.allocations
+        } catch (error) {
+            console.error(error)
+        }
+    }
+
     async getTransactionsByType(type: string, id: number) {
         try {
             const response = await fetch('http://localhost:8787/api/transactions/filter/' + type + '/' + id)

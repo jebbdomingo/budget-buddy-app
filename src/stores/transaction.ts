@@ -134,6 +134,7 @@ export const useTransactionStore = defineStore('transaction', () => {
             accountTransactions.value.forEach((txn: Transaction, index: number) => {
                 if (txn.transaction_id == transaction.transaction_id) {
                     if (txn.account_id != transaction.account_id) {
+                        // Move transaction to designated account
                         accountTransactions.value.splice(index, 1)
                     } else {
                         txn.account_id = transaction.account_id
