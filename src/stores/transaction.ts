@@ -116,6 +116,7 @@ export const useTransactionStore = defineStore('transaction', () => {
         if (ok) {
             const amount = transaction.transaction_type == 'Outflow' ? -transaction.amount : transaction.amount
 
+            // @todo these could be implemented as an event behavior
             transactions.value.forEach((txn: Transaction, index: number) => {
                 if (txn.transaction_id == transaction.transaction_id) {
                     txn.account_id = transaction.account_id
@@ -132,16 +133,19 @@ export const useTransactionStore = defineStore('transaction', () => {
             
             accountTransactions.value.forEach((txn: Transaction, index: number) => {
                 if (txn.transaction_id == transaction.transaction_id) {
-                    // console.log(transaction)
-                    txn.account_id = transaction.account_id
-                    txn.budget = transaction.budget
-                    txn.budget_month = transaction.budget_month
-                    txn.amount = amount
-                    txn.payee = transaction.payee
-                    txn.memo = transaction.memo
-                    txn.transaction_date = transaction.transaction_date
-                    txn.transaction_type = transaction.transaction_type
-                    accountTransactions[index] = txn
+                    if (txn.account_id != transaction.account_id) {
+                        accountTransactions.value.splice(index, 1)
+                    } else {
+                        txn.account_id = transaction.account_id
+                        txn.budget = transaction.budget
+                        txn.budget_month = transaction.budget_month
+                        txn.amount = amount
+                        txn.payee = transaction.payee
+                        txn.memo = transaction.memo
+                        txn.transaction_date = transaction.transaction_date
+                        txn.transaction_type = transaction.transaction_type
+                        accountTransactions[index] = txn
+                    }
                 }
             })
         }

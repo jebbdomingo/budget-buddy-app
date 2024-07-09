@@ -80,9 +80,9 @@ export const useAccountStore = defineStore('account', () => {
                 const operator = txn.transaction_type == 'Inflow' ? '+' : '-'
 
                 if (row.account_id == txn.account_id) {
-                    const ava = parseFloat(totals[row.account_id]) ? parseFloat(totals[row.account_id]) : 0
+                    const bal = parseFloat(totals[row.account_id]) ? parseFloat(totals[row.account_id]) : 0
                     const amount = Math.abs(txn.amount)
-                    const avail = calculate[operator](ava, amount)
+                    const avail = calculate[operator](bal, amount)
                     totals[txn.account_id] = avail
                 }
             })

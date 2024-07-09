@@ -347,8 +347,8 @@ class SnapshotsOperation {
                 cBudget.budget_id = budget.budget_id
                 cBudget.title = budget.title
 
-                const ava = parseFloat(available[budget.title]) ? parseFloat(available[budget.title]) : 0
-                const avail = ava + this.cumulative(row.month, cBudget.budget_id)
+                const bal = parseFloat(available[budget.title]) ? parseFloat(available[budget.title]) : 0
+                const avail = bal + this.cumulative(row.month, cBudget.budget_id)
                 available[budget.title] = avail
 
                 cBudget.assigned = budget.assigned
