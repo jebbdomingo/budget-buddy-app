@@ -1,4 +1,4 @@
-import { type Transaction } from '../types/types'
+import { type Allocation, type Transaction } from '../types/types'
 
 export class BudgetApi {
     async getBudgets() {
@@ -39,16 +39,6 @@ export class BudgetApi {
         } catch (error) {
             console.error(error)
             return { error: error }
-        }
-    }
-
-    async getAllocations() {
-        try {
-            const response = await fetch('http://localhost:8787/api/allocations')
-            const result = await response.json()
-            return result.allocations
-        } catch (error) {
-            console.error(error)
         }
     }
 
@@ -212,6 +202,33 @@ export class BudgetApi {
     //         console.error(error)
     //     }
     // }
+
+    async createAllocation(allocation: Allocation) {
+        try {
+            const options = {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(allocation)
+            }
+            
+            const response = await fetch("http://localhost:8787/api/allocations", options)
+            const result = await response.json()
+            return { ok: result.ok, result: result.allocation, message: result.error }
+        } catch (error) {
+            console.error(error)
+            return { ok: false, message: error }
+        }
+    }
+
+    async getAllocations() {
+        try {
+            const response = await fetch('http://localhost:8787/api/allocations')
+            const result = await response.json()
+            return result.allocations
+        } catch (error) {
+            console.error(error)
+        }
+    }
     
     async getBudgetsBalances() {
         try {

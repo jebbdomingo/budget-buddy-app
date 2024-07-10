@@ -27,6 +27,7 @@ export const useBudgetStore = defineStore('budget', () => {
 
         o = new SnapshotsOperation({
             budgets: budgets,
+            balances: balances,
             allocations: allocations,
             snapshots: snapshots
         })
@@ -92,8 +93,12 @@ export const useBudgetStore = defineStore('budget', () => {
     async function assign(budget: Budget) {
         console.log('budget-store.assign-budget')
 
+        const { ok, result } = await api.createAllocation(budget)
+
         // Update reactive snapshots
-        regenerateSnapshots('assign', budget)
+        regenerateSnapshots('assign', result)
+
+        return ok
     }
     
     async function updateBudget(budget: Budget) {
@@ -214,11 +219,13 @@ export const useBudgetStore = defineStore('budget', () => {
 class SnapshotsOperation {
     snapshots: any
     budgets: any
+    balances: any
     allocations: any
     transactionStore: any
 
-    constructor(options: {budgets, allocations, snapshots}) {
+    constructor(options: {budgets, balances, allocations, snapshots}) {
         this.budgets = options.budgets
+        this.balances = options.balances
         this.allocations = options.allocations
         this.snapshots = options.snapshots
         this.transactionStore = useTransactionStore()
@@ -259,13 +266,18 @@ class SnapshotsOperation {
             let months = { month: month, budgets: [] = [] }
             
             this.budgets.value.forEach(budget => {
-                const allocation = this.findAllocationBy(budget.budget_id, month)
-
                 let cBudget: Budget = <Budget>{}
                 cBudget.budget_id = budget.budget_id
                 cBudget.title = budget.title
-                cBudget.assigned = allocation.amount
-                cBudget.available = allocation.amount
+
+                // Search for the transaction balances (assigned and available balance) for the corresponding budget
+                this.balances.value.forEach(budgetBalance => {
+                    if (budget.budget_id == budgetBalance.budget_id && month == budgetBalance.budget_month) {
+                        cBudget.assigned = budgetBalance.assigned
+                        cBudget.available = budgetBalance.available
+                    }
+                })
+                
                 months.budgets.push(cBudget)
             })
             
@@ -347,7 +359,7 @@ class SnapshotsOperation {
             if (row.month == transaction.month) {
                 const index = this.findIndexById(row.budgets, transaction.budget_id)
                 const cBudget = row.budgets[index]
-                cBudget.assigned += transaction.assigned
+                cBudget.assigned = transaction.assigned
 
                 row.budgets[index] = cBudget
             }
@@ -375,7 +387,10 @@ class SnapshotsOperation {
 
                 const bal = parseFloat(available[budget.title]) ? parseFloat(available[budget.title]) : 0
                 const assigned = parseFloat(budget.assigned) ? parseFloat(budget.assigned) : 0
-                const avail = bal + this.cumulative(row.month, cBudget.budget_id) + assigned
+                
+                // Increment "available" fund from each previous month's balances
+                const avail = bal + assigned + this.cumulative(row.month, cBudget.budget_id)
+
                 available[budget.title] = avail
 
                 cBudget.assigned = assigned

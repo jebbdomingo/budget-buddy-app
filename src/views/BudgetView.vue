@@ -87,6 +87,18 @@
                         <InputNumber placeholder="Amount" v-model="budget.assigned" inputId="minmaxfraction" :minFractionDigits="2" :maxFractionDigits="5" />
                     </InputGroup>
                 </div>
+                <div class="flex align-items-center gap-3 mb-5">
+                    <FloatLabel class="w-full md:w-14rem">
+                        <Dropdown inputId="budget-from" v-model="budget.from" :options="store.budgets" filter optionLabel="title" optionValue="budget_id" placeholder="FROM:" class="w-full"></Dropdown>
+                        <label for="budget-from">From</label>
+                    </FloatLabel>
+                </div>
+                <div class="flex align-items-center gap-3 mb-5">
+                    <FloatLabel class="w-full md:w-14rem">
+                        <Dropdown inputId="budget-to" v-model="budget.to" :options="store.budgets" filter optionLabel="title" optionValue="budget_id" placeholder="TO:" class="w-full"></Dropdown>
+                        <label for="budget-to">To</label>
+                    </FloatLabel>
+                </div>
                 <div class="flex justify-content-end gap-2">
                     <Button type="button" label="Cancel" severity="secondary" @click="assignDialog = false"></Button>
                     <Button type="button" label="Save" @click="handleAssign"></Button>
@@ -103,10 +115,9 @@ import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import Tag from 'primevue/tag'
 import { useBudgetStore } from '../stores/budget'
+import { useTransactionStore } from '../stores/transaction'
 import { type Budget } from '../types/types'
 import { useToast } from 'primevue/usetoast'
-
-import { useTransactionStore } from '../stores/transaction'
 
 const store = useBudgetStore()
 const toast = useToast();
@@ -161,26 +172,29 @@ const edit = (budg: Budget) => {
 const assign = (budg: Budget) => {
     const oBudget = {...budg}
 
-    budget.budget_id = oBudget.budget_id
+    budget.from = 1
+    budget.to = oBudget.budget_id
     budget.title = oBudget.title
     budget.assigned = oBudget.assigned
     budget.available = oBudget.available
 
     console.log(oBudget)
+    console.log(budget)
 
     assignDialog.value = true
 }
 
-function handleAssign() {
+async function handleAssign() {
     console.log('handleAssign()')
 
     const oDate = new Date(date.value)
     const oMonth = oDate.getMonth() + 1
     budget.month = oMonth + '-' + oDate.getFullYear()
-    
-    store.assign(budget)
 
-    budget.budget_id = 0
+    await store.assign(budget)
+
+    budget.from = ''
+    budget.to = ''
     budget.title = ''
     budget.assigned = ''
     budget.available = ''
