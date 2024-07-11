@@ -84,18 +84,18 @@
                 <div class="flex align-items-center gap-3 mb-5">
                     <InputGroup>
                         <InputGroupAddon>₱</InputGroupAddon>
-                        <InputNumber placeholder="Amount" v-model="budget.assigned" inputId="minmaxfraction" :minFractionDigits="2" :maxFractionDigits="5" />
+                        <InputNumber placeholder="Amount" v-model="allocation.assigned" inputId="minmaxfraction" :minFractionDigits="2" :maxFractionDigits="5" />
                     </InputGroup>
                 </div>
                 <div class="flex align-items-center gap-3 mb-5">
                     <FloatLabel class="w-full md:w-14rem">
-                        <Dropdown inputId="budget-from" v-model="budget.from" :options="store.budgets" filter optionLabel="title" optionValue="budget_id" placeholder="FROM:" class="w-full"></Dropdown>
+                        <Dropdown inputId="budget-from" v-model="allocation.from" :options="store.budgets" filter optionLabel="title" optionValue="budget_id" placeholder="FROM:" class="w-full"></Dropdown>
                         <label for="budget-from">From</label>
                     </FloatLabel>
                 </div>
                 <div class="flex align-items-center gap-3 mb-5">
                     <FloatLabel class="w-full md:w-14rem">
-                        <Dropdown inputId="budget-to" v-model="budget.to" :options="store.budgets" filter optionLabel="title" optionValue="budget_id" placeholder="TO:" class="w-full"></Dropdown>
+                        <Dropdown inputId="budget-to" v-model="allocation.to" :options="store.budgets" filter optionLabel="title" optionValue="budget_id" placeholder="TO:" class="w-full"></Dropdown>
                         <label for="budget-to">To</label>
                     </FloatLabel>
                 </div>
@@ -129,6 +129,13 @@ const maxDate = ref(today)
 const budgetDialog = ref(false)
 const assignDialog = ref(false)
 const archiveDialog = ref(false)
+
+const allocationInitialState = {
+    from: 0,
+    to: 0,
+    assigned: 0
+}
+const allocation = reactive(allocationInitialState)
 
 const budget = reactive<Budget>({
     budget_id: 0,
@@ -172,14 +179,8 @@ const edit = (budg: Budget) => {
 const assign = (budg: Budget) => {
     const oBudget = {...budg}
 
-    budget.from = 1
-    budget.to = oBudget.budget_id
-    budget.title = oBudget.title
-    budget.assigned = oBudget.assigned
-    budget.available = oBudget.available
-
-    console.log(oBudget)
-    console.log(budget)
+    allocation.from = 1
+    allocation.to = oBudget.budget_id
 
     assignDialog.value = true
 }
@@ -191,18 +192,14 @@ async function handleAssign() {
     const oMonth = oDate.getMonth() + 1
 
     await store.assign({
-        from: budget.from,
-        to: budget.to,
-        assigned: budget.assigned,
+        from: allocation.from,
+        to: allocation.to,
+        assigned: allocation.assigned,
         month: oMonth + '-' + oDate.getFullYear()
     })
 
-    budget.from = ''
-    budget.to = ''
-    budget.title = ''
-    budget.assigned = ''
-    budget.available = ''
-    budget.month = ''
+    // Reset
+    Object.assign(allocation, allocationInitialState)
 
     assignDialog.value = false
 }

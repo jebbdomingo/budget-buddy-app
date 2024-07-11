@@ -77,7 +77,7 @@ async function handleSave() {
 
     transactionStore.transactionDialog = false
 
-    budgetStore.regenerateSnapshots('allocation')
+    budgetStore.regenerateSnapshots('running')
     accountStore.recalculateAccounts()
 
     // Reset transaction reactive
