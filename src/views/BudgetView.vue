@@ -189,9 +189,13 @@ async function handleAssign() {
 
     const oDate = new Date(date.value)
     const oMonth = oDate.getMonth() + 1
-    budget.month = oMonth + '-' + oDate.getFullYear()
 
-    await store.assign(budget)
+    await store.assign({
+        from: budget.from,
+        to: budget.to,
+        assigned: budget.assigned,
+        month: oMonth + '-' + oDate.getFullYear()
+    })
 
     budget.from = ''
     budget.to = ''

@@ -93,10 +93,10 @@ export const useBudgetStore = defineStore('budget', () => {
     async function assign(budget: Budget) {
         console.log('budget-store.assign-budget')
 
-        const { ok, result } = await api.createAllocation(budget)
+        const { ok } = await api.createAllocation(budget)
 
         // Update reactive snapshots
-        regenerateSnapshots('assign', result)
+        regenerateSnapshots('assign', budget)
 
         return ok
     }
@@ -354,12 +354,17 @@ class SnapshotsOperation {
      */
     assignBudget(transaction: BudgetTransaction) {
         console.log('budget-store.snapshot-operation.assign-budget')
+
+        console.log(transaction)
         
         this.snapshots.value.forEach(row => {
             if (row.month == transaction.month) {
-                const index = this.findIndexById(row.budgets, transaction.budget_id)
+                console.log(row.month)
+                const index = this.findIndexById(row.budgets, transaction.to)
                 const cBudget = row.budgets[index]
-                cBudget.assigned = transaction.assigned
+                console.log(cBudget)
+                cBudget.assigned += transaction.assigned
+                cBudget.available += transaction.assigned
 
                 row.budgets[index] = cBudget
             }
