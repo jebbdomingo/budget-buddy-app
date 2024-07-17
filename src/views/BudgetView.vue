@@ -42,6 +42,13 @@
                                         }
                                     },
                                     {
+                                        label: 'Activities',
+                                        icon: 'pi pi-money-bill',
+                                        command: () => {
+                                            activities(slotProps.data.budget_id)
+                                        }
+                                    },
+                                    {
                                         label: 'Archive',
                                         icon: 'pi pi-trash',
                                         command: () => {
@@ -107,6 +114,53 @@
         </div>
     </template>
 
+    <template>
+        <Dialog v-model:visible="activitiesDialog" modal header="Transactions" :style="{ width: '35rem' }">
+            <div class="grid">
+                <div class="col-12">
+                    <div class="card">
+                        <DataTable stateStorage="session" stateKey="dt-state-account-transactions-session" ref="dt" stripedRows :value="transactionStore.budgetTransactions" rowGroupMode="subheader" groupRowsBy="transaction_date" :rowClass="rowClass">
+                            <Column field="transaction_date" header="Date"></Column>
+                            <Column field="payee">
+                                <template #body="slotProps">
+                                    <div>{{ slotProps.data.payee }}</div>
+                                    <div><small>{{ slotProps.data.budget.title }}</small></div>
+                                </template>
+                            </Column>
+                            <Column field="amount" headerStyle="width: 7rem; text-align: right" bodyStyle="text-align: right">
+                                <template #body="slotProps">
+                                    <div :class="transactionColor(slotProps.data.amount)">{{ formatCurrency(slotProps.data.amount) }}</div>
+                                    <div><small>{{ slotProps.data.memo }}</small></div>
+                                </template>
+                            </Column>
+                            <Column :exportable="false" style="min-width:8rem" headerStyle="width: 7rem; text-align: right" bodyStyle="text-align: right">
+                                <template #body="slotProps">
+                                    <SplitButton
+                                        label="Edit" icon="pi pi-check" menuButtonIcon="pi pi-cog" @click="editTransaction(slotProps.data)" severity="secondary"
+                                        :model="[
+                                            {
+                                                label: 'Archive',
+                                                icon: 'pi pi-trash',
+                                                command: () => {
+                                                    confirmArchive(slotProps.data)
+                                                }
+                                            }
+                                        ]"
+                                    />
+                                </template>
+                            </Column>
+                            <template #groupheader="slotProps">
+                                <div class="flex align-items-center gap-2 text-secondary">
+                                    <span><strong>{{ formatDate(slotProps.data.transaction_date) }}</strong></span>
+                                </div>
+                            </template>
+                        </DataTable>
+                    </div>
+                </div>
+            </div>
+        </Dialog>
+    </template>
+
 </template>
 
 <script setup lang="ts">
@@ -118,8 +172,11 @@ import { useBudgetStore } from '../stores/budget'
 import { useTransactionStore } from '../stores/transaction'
 import { type Budget } from '../types/types'
 import { useToast } from 'primevue/usetoast'
+import { useRoute } from 'vue-router'
 
+const route = useRoute()
 const store = useBudgetStore()
+const transactionStore = useTransactionStore()
 const toast = useToast();
 const date = ref(new Date())
 const dt = ref(null)
@@ -129,6 +186,7 @@ const maxDate = ref(today)
 const budgetDialog = ref(false)
 const assignDialog = ref(false)
 const archiveDialog = ref(false)
+const activitiesDialog = ref(false)
 
 const allocationInitialState = {
     from: 0,
@@ -156,9 +214,32 @@ const severity = (value) => {
     return severity
 }
 
+const rowClass = (data) => {
+    return [{ 'bg-blue-50': data.transaction_id }];
+}
+
+const transactionColor = (value) => {
+    let className: string = ''
+
+    if (value > 0) {
+        className = 'text-primary-600'
+    } else {
+        className = 'text-secondary'
+    }
+
+    return className
+}
+
 const formatCurrency = (value: any) => {
     let result: number = value ? value : 0
     return result.toLocaleString('en-US', { style: 'currency', currency: 'PHP' })
+}
+
+const formatDate = (value: string) => {
+    const date = new Date(value)
+    const formatter = new Intl.DateTimeFormat('en-US', { day: '2-digit', month: 'long', year: 'numeric' })
+    return formatter.format(date)
+    // return date.toLocaleDateString()
 }
 
 const showToast = (result: boolean, message: string) => {
@@ -169,11 +250,38 @@ const showToast = (result: boolean, message: string) => {
     }
 }
 
+const activities = (id: number) => {
+    const oDate = new Date(date.value)
+    const oMonth = oDate.getMonth() + 1
+    const month = oMonth + '-' + oDate.getFullYear()
+
+    console.log(month)
+
+    transactionStore.getBudgetTransactions(id, month)
+    activitiesDialog.value = true
+}
+
 const edit = (budg: Budget) => {
     const oBudget = {...budg}
     budget.budget_id = oBudget.budget_id
     budget.title = oBudget.title
     budgetDialog.value = true
+}
+
+const editTransaction = (txn: Transaction) => {
+    const oTxn = {...txn}
+
+    transactionStore.transaction.transaction_id = oTxn.transaction_id
+    transactionStore.transaction.budget = oTxn.budget
+    transactionStore.transaction.account_id = oTxn.account_id
+    transactionStore.transaction.transaction_type = oTxn.transaction_type
+    transactionStore.transaction.transaction_date = oTxn.transaction_date
+    transactionStore.transaction.amount = Math.abs(oTxn.amount) // Ensure absolute number
+    transactionStore.transaction.budget_month = oTxn.budget_month
+    transactionStore.transaction.payee = oTxn.payee
+    transactionStore.transaction.memo = oTxn.memo
+
+    transactionStore.transactionDialog = true;
 }
 
 const assign = (budg: Budget) => {
@@ -249,8 +357,6 @@ const handleArchive = async () => {
 
 onMounted(() => {
     store.snapshotSelector(date)
-
-    const transactionStore = useTransactionStore()
     transactionStore.initialize()
 })
 </script>

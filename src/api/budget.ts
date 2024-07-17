@@ -42,9 +42,19 @@ export class BudgetApi {
         }
     }
 
-    async getTransactionsByType(type: string, id: number) {
+    async getTransactionsByType(type: string, id: number, month?: string) {
         try {
-            const response = await fetch('http://localhost:8787/api/transactions/filter/' + type + '/' + id)
+            let url: string = ''
+
+            if (typeof month !== 'undefined') {
+                url = 'http://localhost:8787/api/transactions/filter/' + type + '/' + id + '/' + month
+            } else {
+                url = 'http://localhost:8787/api/transactions/filter/' + type + '/' + id
+            }
+
+            console.log(url)
+
+            const response = await fetch(url)
             const result = await response.json()
             return result.transactions
         } catch (error) {

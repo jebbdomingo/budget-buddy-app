@@ -42,6 +42,7 @@ const normalize = (row: Transaction) => {
 export const useTransactionStore = defineStore('transaction', () => {
     const transactions = ref<Transaction[]>([])
     const accountTransactions = ref<Transaction[]>([])
+    const budgetTransactions = ref<Transaction[]>([])
     const transactionDialog = ref<boolean>(false)
 
     const initialState = {
@@ -88,12 +89,30 @@ export const useTransactionStore = defineStore('transaction', () => {
         } else {
             transactions.value = data.map(normalize)
 
-            // Cache budgets
+            // Cache transactions
             localStorage.setItem('transactions', JSON.stringify(toValue(transactions)))
         }
     }
 
-    async function archive(transaction: Account) {
+
+    async function getBudgetTransactions(id: any, date?: string) {
+        const data = await api.getTransactionsByType('budget', id, date)
+        let result
+
+        if (data.error) {
+            // Fetch from local storage when offline
+            result = JSON.parse(localStorage.getItem('budget-transactions:' + id))
+        } else {
+            result = data.map(normalize)
+
+            // Cache budget transactions
+            localStorage.setItem('budget-transactions:' + id, JSON.stringify(result))
+        }
+
+        budgetTransactions.value = result
+    }
+
+    async function archive(transaction: Transaction) {
         const { ok } = await api.archiveTransaction(transaction.transaction_id)
 
         if (ok) {
@@ -149,6 +168,25 @@ export const useTransactionStore = defineStore('transaction', () => {
                     }
                 }
             })
+            
+            budgetTransactions.value.forEach((txn: Transaction, index: number) => {
+                if (txn.transaction_id == transaction.transaction_id) {
+                    if (txn.account_id != transaction.account_id) {
+                        // Move transaction to designated account
+                        budgetTransactions.value.splice(index, 1)
+                    } else {
+                        txn.account_id = transaction.account_id
+                        txn.budget = transaction.budget
+                        txn.budget_month = transaction.budget_month
+                        txn.amount = amount
+                        txn.payee = transaction.payee
+                        txn.memo = transaction.memo
+                        txn.transaction_date = transaction.transaction_date
+                        txn.transaction_type = transaction.transaction_type
+                        budgetTransactions[index] = txn
+                    }
+                }
+            })
         }
 
         reset()
@@ -192,5 +230,5 @@ export const useTransactionStore = defineStore('transaction', () => {
         localStorage.setItem('transactions', JSON.stringify(toValue(newValue)))
     }, { deep: true })
 
-    return { transactionDialog, transaction, accountTransactions, transactions, initialize, setAccountTransactions, update, create, archive, reset }
+    return { transactionDialog, transaction, getBudgetTransactions, accountTransactions, budgetTransactions, transactions, initialize, setAccountTransactions, update, create, archive, reset }
 })
