@@ -42,7 +42,14 @@
                                         }
                                     },
                                     {
-                                        label: 'Activities',
+                                        label: 'Assigned for ' + month,
+                                        icon: 'pi pi-money-bill',
+                                        command: () => {
+                                            allocations(slotProps.data.budget_id)
+                                        }
+                                    },
+                                    {
+                                        label: 'Activities in ' + month,
                                         icon: 'pi pi-money-bill',
                                         command: () => {
                                             activities(slotProps.data.budget_id)
@@ -160,11 +167,58 @@
             </div>
         </Dialog>
     </template>
+    
+    <template>
+        <Dialog v-model:visible="movesDialog" modal header="Moves" :style="{ width: '35rem' }">
+            <div class="grid">
+                <div class="col-12">
+                    <div class="card">
+                        <DataTable stateStorage="session" stateKey="dt-state-account-transactions-session" ref="dt" stripedRows :value="transactionStore.budgetTransactions" rowGroupMode="subheader" groupRowsBy="transaction_date" :rowClass="rowClass">
+                            <Column field="transaction_date" header="Date"></Column>
+                            <Column field="payee">
+                                <template #body="slotProps">
+                                    <div>{{ slotProps.data.payee }}</div>
+                                    <div><small>{{ slotProps.data.budget.title }}</small></div>
+                                </template>
+                            </Column>
+                            <Column field="amount" headerStyle="width: 7rem; text-align: right" bodyStyle="text-align: right">
+                                <template #body="slotProps">
+                                    <div :class="transactionColor(slotProps.data.amount)">{{ formatCurrency(slotProps.data.amount) }}</div>
+                                    <div><small>{{ slotProps.data.memo }}</small></div>
+                                </template>
+                            </Column>
+                            <Column :exportable="false" style="min-width:8rem" headerStyle="width: 7rem; text-align: right" bodyStyle="text-align: right">
+                                <template #body="slotProps">
+                                    <SplitButton
+                                        label="Edit" icon="pi pi-check" menuButtonIcon="pi pi-cog" @click="editTransaction(slotProps.data)" severity="secondary"
+                                        :model="[
+                                            {
+                                                label: 'Archive',
+                                                icon: 'pi pi-trash',
+                                                command: () => {
+                                                    confirmArchive(slotProps.data)
+                                                }
+                                            }
+                                        ]"
+                                    />
+                                </template>
+                            </Column>
+                            <template #groupheader="slotProps">
+                                <div class="flex align-items-center gap-2 text-secondary">
+                                    <span><strong>{{ formatDate(slotProps.data.transaction_date) }}</strong></span>
+                                </div>
+                            </template>
+                        </DataTable>
+                    </div>
+                </div>
+            </div>
+        </Dialog>
+    </template>
 
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, reactive } from 'vue';
+import { ref, onMounted, reactive, watchEffect } from 'vue';
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import Tag from 'primevue/tag'
@@ -179,12 +233,14 @@ const store = useBudgetStore()
 const transactionStore = useTransactionStore()
 const toast = useToast();
 const date = ref(new Date())
+const month = ref()
 const dt = ref(null)
 const today = new Date()
 today.setMonth(today.getMonth() + 2)
 const maxDate = ref(today)
 const budgetDialog = ref(false)
 const assignDialog = ref(false)
+const movesDialog = ref(false)
 const archiveDialog = ref(false)
 const activitiesDialog = ref(false)
 
@@ -254,8 +310,6 @@ const activities = (id: number) => {
     const oDate = new Date(date.value)
     const oMonth = oDate.getMonth() + 1
     const month = oMonth + '-' + oDate.getFullYear()
-
-    console.log(month)
 
     transactionStore.getBudgetTransactions(id, month)
     activitiesDialog.value = true
@@ -354,6 +408,11 @@ const handleArchive = async () => {
     budget.budget_id = 0
     budget.title = ''
 }
+
+watchEffect(() => {
+    // Month
+    month.value = date.value.toLocaleString('default', { month: 'long' })
+})
 
 onMounted(() => {
     store.snapshotSelector(date)
