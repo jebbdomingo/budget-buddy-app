@@ -93,7 +93,28 @@ export const useBudgetStore = defineStore('budget', () => {
     async function assign(allocation) {
         console.log('budget-store.assign-budget')
 
+        const oDate = new Date(allocation.transaction_date)
+        const oMonth = oDate.getMonth() + 1
+    
+        allocation.month = oMonth + '-' + oDate.getFullYear()
+        allocation.transaction_date = oDate.toLocaleDateString("en-US")
+
         const { ok } = await api.createAllocation(allocation)
+
+        const from = getBudget(allocation.from)
+        const to = getBudget(allocation.to)
+
+        // Update allocations reactive
+        allocations.value.push({
+            budget_month: allocation.month,
+            budget_credited_id: from.budget_id,
+            budget_credited: from.title,
+            budget_debited_id: to.budget_id,
+            budget_debited: to.title,
+            debit: allocation.assigned,
+            credit: allocation.assigned,
+            transaction_date: allocation.transaction_date
+        })
 
         // Update reactive snapshots
         regenerateSnapshots('assign', allocation)
@@ -135,6 +156,19 @@ export const useBudgetStore = defineStore('budget', () => {
         }
 
         return ok
+    }
+
+    function getBudgetAllocations(id: any, date?: string) {
+        let result: any = []
+
+        allocations.value.forEach(allocation => {
+            if (allocation.budget_month == date && (allocation.budget_debited_id == id || allocation.budget_credited_id == id)) {
+                console.log(allocation)
+                result.push(allocation)
+            }
+        })
+
+        return result
     }
 
     function getBudget(id: number) {
@@ -199,6 +233,12 @@ export const useBudgetStore = defineStore('budget', () => {
         })
     }
 
+    watch(allocations, (newValue) => {
+        // Store updated budgets in local storage
+        console.log('budget-store.watch:allocations')
+        localStorage.setItem('allocations', JSON.stringify(toValue(newValue)))
+    }, { deep: true })
+    
     watch(budgets, (newValue) => {
         // Store updated budgets in local storage
         console.log('budget-store.watch:budgets')
@@ -211,7 +251,7 @@ export const useBudgetStore = defineStore('budget', () => {
         localStorage.setItem('snapshots', JSON.stringify(toValue(newValue)))
     }, { deep: true })
 
-    return { budgets, snapshots, snapshot, initialize, getBudget, setBudgets, assign, updateBudget, createBudget, archiveBudget, regenerateSnapshots, snapshotSelector }
+    return { budgets, snapshots, snapshot, initialize, getBudget, setBudgets, assign, updateBudget, createBudget, archiveBudget, getBudgetAllocations, regenerateSnapshots, snapshotSelector }
 })
 
 /**
@@ -364,7 +404,6 @@ class SnapshotsOperation {
         
         this.snapshots.value.forEach(row => {
             if (row.month == allocation.month) {
-                console.log(row.month)
                 const index = this.findIndexById(row.budgets, allocation.to)
                 const cBudget = row.budgets[index]
 

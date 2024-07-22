@@ -166,41 +166,23 @@
                 </div>
             </div>
         </Dialog>
-    </template>
-    
-    <template>
-        <Dialog v-model:visible="movesDialog" modal header="Moves" :style="{ width: '35rem' }">
+        
+        <Dialog v-model:visible="allocationsDialog" modal header="Moves" :style="{ width: '35rem' }">
             <div class="grid">
                 <div class="col-12">
                     <div class="card">
-                        <DataTable stateStorage="session" stateKey="dt-state-account-transactions-session" ref="dt" stripedRows :value="transactionStore.budgetTransactions" rowGroupMode="subheader" groupRowsBy="transaction_date" :rowClass="rowClass">
+                        <DataTable stateStorage="session" stateKey="dt-state-account-transactions-session" ref="dt" stripedRows :value="budgetAllocations" rowGroupMode="subheader" groupRowsBy="transaction_date" :rowClass="rowClass">
                             <Column field="transaction_date" header="Date"></Column>
-                            <Column field="payee">
+                            <Column field="budget_credited"></Column>
+                            <Column :exportable="false" style="min-width:2rem" bodyStyle="text-align: center">
                                 <template #body="slotProps">
-                                    <div>{{ slotProps.data.payee }}</div>
-                                    <div><small>{{ slotProps.data.budget.title }}</small></div>
+                                    <i class="pi pi-arrow-right"></i>
                                 </template>
                             </Column>
+                            <Column field="budget_debited"></Column>
                             <Column field="amount" headerStyle="width: 7rem; text-align: right" bodyStyle="text-align: right">
                                 <template #body="slotProps">
-                                    <div :class="transactionColor(slotProps.data.amount)">{{ formatCurrency(slotProps.data.amount) }}</div>
-                                    <div><small>{{ slotProps.data.memo }}</small></div>
-                                </template>
-                            </Column>
-                            <Column :exportable="false" style="min-width:8rem" headerStyle="width: 7rem; text-align: right" bodyStyle="text-align: right">
-                                <template #body="slotProps">
-                                    <SplitButton
-                                        label="Edit" icon="pi pi-check" menuButtonIcon="pi pi-cog" @click="editTransaction(slotProps.data)" severity="secondary"
-                                        :model="[
-                                            {
-                                                label: 'Archive',
-                                                icon: 'pi pi-trash',
-                                                command: () => {
-                                                    confirmArchive(slotProps.data)
-                                                }
-                                            }
-                                        ]"
-                                    />
+                                    <div>{{ formatAllocationAmount(slotProps.data) }}</div>
                                 </template>
                             </Column>
                             <template #groupheader="slotProps">
@@ -243,6 +225,9 @@ const assignDialog = ref(false)
 const movesDialog = ref(false)
 const archiveDialog = ref(false)
 const activitiesDialog = ref(false)
+const allocationsDialog = ref(false)
+const budgetAllocations = ref()
+const activeBudget = ref()
 
 const allocationInitialState = {
     from: 0,
@@ -286,6 +271,13 @@ const transactionColor = (value) => {
     return className
 }
 
+const formatAllocationAmount = (data) => {
+    const isDebit = data.budget_debited_id == activeBudget.value ? true : false
+    const amount = isDebit ? data.debit : -data.debit
+    
+    return formatCurrency(amount)
+}
+
 const formatCurrency = (value: any) => {
     let result: number = value ? value : 0
     return result.toLocaleString('en-US', { style: 'currency', currency: 'PHP' })
@@ -304,6 +296,18 @@ const showToast = (result: boolean, message: string) => {
     } else {
         toast.add({ severity: 'success', summary: 'Operation successful', detail: message, life: 3000 })
     }
+}
+
+const allocations = (id: number) => {
+    console.log('Assign Dialog')
+    const oDate = new Date(date.value)
+    const oMonth = oDate.getMonth() + 1
+    const month = oMonth + '-' + oDate.getFullYear()
+
+    activeBudget.value = id
+    budgetAllocations.value = store.getBudgetAllocations(id, month)
+
+    allocationsDialog.value = true
 }
 
 const activities = (id: number) => {
@@ -341,6 +345,8 @@ const editTransaction = (txn: Transaction) => {
 const assign = (budg: Budget) => {
     const oBudget = {...budg}
 
+    console.log(oBudget)
+
     allocation.from = 1
     allocation.to = oBudget.budget_id
 
@@ -350,14 +356,16 @@ const assign = (budg: Budget) => {
 async function handleAssign() {
     console.log('handleAssign()')
 
-    const oDate = new Date(date.value)
-    const oMonth = oDate.getMonth() + 1
+    // Set the transaction date based on the date selector
+    const today = new Date()
+    const oDate = date.value
+    oDate.setDate(today.getDate()) // The date selector is formatted as MM yy, hence we need to explicitly set the current date of month for the transaction date
 
     await store.assign({
         from: allocation.from,
         to: allocation.to,
         assigned: allocation.assigned,
-        month: oMonth + '-' + oDate.getFullYear()
+        transaction_date: oDate
     })
 
     // Reset
