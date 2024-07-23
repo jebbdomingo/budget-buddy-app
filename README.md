@@ -1,46 +1,31 @@
-# budget-buddy-app
+# Budget Buddy
 
-This template should help get you started developing with Vue 3 in Vite.
+Budget Buddy is a personal budget app that takes inspiration from YNAB and Goodbudget combining the envelop budgeting concept and intuitive UI for quick and easy budgeting.
 
-## Recommended IDE Setup
+## Why Budget Buddy?
 
-[VSCode](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur) + [TypeScript Vue Plugin (Volar)](https://marketplace.visualstudio.com/items?itemName=Vue.vscode-typescript-vue-plugin).
+Budget Buddy is created for those who wants to be able to budget using the envelope-style budgeting as well as funding the future months to exit the economic rat race but doesn't break the bank.
 
-## Type Support for `.vue` Imports in TS
+## Fundamental Features
 
-TypeScript cannot handle type information for `.vue` imports by default, so we replace the `tsc` CLI with `vue-tsc` for type checking. In editors, we need [TypeScript Vue Plugin (Volar)](https://marketplace.visualstudio.com/items?itemName=Vue.vscode-typescript-vue-plugin) to make the TypeScript language service aware of `.vue` types.
+Here's the rundown of the essential features.
 
-If the standalone TypeScript plugin doesn't feel fast enough to you, Volar has also implemented a [Take Over Mode](https://github.com/johnsoncodehk/volar/discussions/471#discussioncomment-1361669) that is more performant. You can enable it by the following steps:
+### Unlimited Budget Envelopes
 
-1. Disable the built-in TypeScript Extension
-    1) Run `Extensions: Show Built-in Extensions` from VSCode's command palette
-    2) Find `TypeScript and JavaScript Language Features`, right click and select `Disable (Workspace)`
-2. Reload the VSCode window by running `Developer: Reload Window` from the command palette.
+Categorize your budget goals into envelops, naming each for its specific purposes whether its for an expense or a goal.
 
-## Customize configuration
+Each envelope shows your allocated amount for each budget for that particular month. And, yes, you can (and you should) fund your future months' budgets to effectively manage your money. Budget envelopes show your priorities and where your money go.
 
-See [Vite Configuration Reference](https://vitejs.dev/config/).
+A budget envelope also shows your available fund in that category and for that specific month, carrying over the money left in that envelope from the previous months.
 
-## Project Setup
+### Budget Movement
 
-```sh
-npm install
-```
+Flexibility is valuable in the world of finance. In Budget Buddy, you can move money between envelopes as you see fit. e.g. Grocery envelope needs a boost and you have available money lying in another envelope, you can move the amount needed from that envelope to cover your need in the Grocery.
 
-### Compile and Hot-Reload for Development
+### Transaction
 
-```sh
-npm run dev
-```
+Financial activity consists of an Inflow or Outflow of money. Record your daily activities whether an income or an expense against a specific envelope to track your spending or goal and see how your budget progress.
 
-### Type-Check, Compile and Minify for Production
+### Read to Assign
 
-```sh
-npm run build
-```
-
-### Run Unit Tests with [Vitest](https://vitest.dev/)
-
-```sh
-npm run test:unit
-```
+It's like a general fund where you can store an Inflow transaction temporarily to be allocated to your budget envelopes later on.
