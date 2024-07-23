@@ -3,9 +3,11 @@
 import { type Allocation, type Transaction } from '../types/types'
 
 export class BudgetApi {
+    private API_HOST = import.meta.env.VITE_API_HOST
+
     async getBudgets() {
         try {
-            const response = await fetch('http://localhost:8787/api/budgets')
+            const response = await fetch(this.API_HOST + '/api/budgets')
             const result = await response.json()
             return result.budgets
         } catch (error) {
@@ -15,7 +17,7 @@ export class BudgetApi {
     
     async getAccounts() {
         try {
-            const response = await fetch('http://localhost:8787/api/accounts')
+            const response = await fetch(this.API_HOST + '/api/accounts')
             const result = await response.json()
             return result.accounts
         } catch (error) {
@@ -30,7 +32,7 @@ export class BudgetApi {
      */
     async getAccountBalances() {
         try {
-            const response = await fetch('http://localhost:8787/api/accountbalances')
+            const response = await fetch(this.API_HOST + '/api/accountbalances')
             const result = await response.json()
 
             if (result.accounts) {
@@ -49,9 +51,9 @@ export class BudgetApi {
             let url: string = ''
 
             if (typeof month !== 'undefined') {
-                url = 'http://localhost:8787/api/transactions/filter/' + type + '/' + id + '/' + month
+                url = this.API_HOST + '/api/transactions/filter/' + type + '/' + id + '/' + month
             } else {
-                url = 'http://localhost:8787/api/transactions/filter/' + type + '/' + id
+                url = this.API_HOST + '/api/transactions/filter/' + type + '/' + id
             }
 
             console.log(url)
@@ -74,7 +76,7 @@ export class BudgetApi {
                 body: JSON.stringify(transaction)
             }
             
-            const response = await fetch("http://localhost:8787/api/fund_allocation", options)
+            const response = await fetch(this.API_HOST + "/api/fund_allocation", options)
             const result = await response.json()
             return { ok: result.ok, result: result.transaction, message: result.error }
         } catch (error) {
@@ -93,7 +95,7 @@ export class BudgetApi {
                 body: JSON.stringify(transaction)
             }
             
-            const response = await fetch("http://localhost:8787/api/fund_allocation", options)
+            const response = await fetch(this.API_HOST + "/api/fund_allocation", options)
             const result = await response.json()
             return { ok: true, result: result.transaction, message: result.error }
         } catch (error) {
@@ -104,7 +106,7 @@ export class BudgetApi {
 
     async getTransactions() {
         try {
-            const response = await fetch('http://localhost:8787/api/transactions')
+            const response = await fetch(this.API_HOST + '/api/transactions')
             const result = await response.json()
             return result.transactions
         } catch (error) {
@@ -120,7 +122,7 @@ export class BudgetApi {
                 body: JSON.stringify({ title: title })
             }
             
-            const response = await fetch("http://localhost:8787/api/budgets", options)
+            const response = await fetch(this.API_HOST + "/api/budgets", options)
             const result = await response.json()
             return { ok: result.budget ? true : false, budget: result.budget, message: result.error }
         } catch (error) {
@@ -137,7 +139,7 @@ export class BudgetApi {
                 body: JSON.stringify({ budget_id: budget_id, title: title })
             }
             
-            const response = await fetch("http://localhost:8787/api/budgets", options)
+            const response = await fetch(this.API_HOST + "/api/budgets", options)
             const result = await response.json()
             return { ok: result.budget ? true : false, result: result.budget, message: result.error }
         } catch (error) {
@@ -148,7 +150,7 @@ export class BudgetApi {
 
     async archiveBudget(id: number) {
         try {
-            const response = await fetch('http://localhost:8787/api/budgets/archive/' + id)
+            const response = await fetch(this.API_HOST + '/api/budgets/archive/' + id)
             const result = await response.json()
 
             return { ok: result.ok, message: result.error }
@@ -160,7 +162,7 @@ export class BudgetApi {
 
     async archiveAccount(id: number) {
         try {
-            const response = await fetch('http://localhost:8787/api/accounts/archive/' + id)
+            const response = await fetch(this.API_HOST + '/api/accounts/archive/' + id)
             const result = await response.json()
 
             return { ok: result.ok, message: result.error }
@@ -178,7 +180,7 @@ export class BudgetApi {
                 body: JSON.stringify({ title: title })
             }
             
-            const response = await fetch("http://localhost:8787/api/accounts", options)
+            const response = await fetch(this.API_HOST + "/api/accounts", options)
             const result = await response.json()
             return { ok: true, account: result.account, message: result.error }
         } catch (error) {
@@ -195,7 +197,7 @@ export class BudgetApi {
                 body: JSON.stringify({ account_id: account_id, title: title })
             }
             
-            const response = await fetch("http://localhost:8787/api/accounts", options)
+            const response = await fetch(this.API_HOST + "/api/accounts", options)
             const result = await response.json()
             return { ok: true, result: result.account, message: result.error }
         } catch (error) {
@@ -206,7 +208,7 @@ export class BudgetApi {
 
     // async getSnapshots() {
     //     try {
-    //         const response = await fetch('http://localhost:8787/api/snapshots')
+    //         const response = await fetch(this.API_HOST + '/api/snapshots')
     //         const result = await response.json()
     //         const snapshots = result.snapshots
     //         return snapshots
@@ -223,7 +225,7 @@ export class BudgetApi {
                 body: JSON.stringify(allocation)
             }
             
-            const response = await fetch("http://localhost:8787/api/allocations", options)
+            const response = await fetch(this.API_HOST + "/api/allocations", options)
             const result = await response.json()
             return { ok: result.ok, result: result.allocation, message: result.error }
         } catch (error) {
@@ -234,7 +236,7 @@ export class BudgetApi {
 
     async getAllocations() {
         try {
-            const response = await fetch('http://localhost:8787/api/allocations')
+            const response = await fetch(this.API_HOST + '/api/allocations')
             const result = await response.json()
             return result.allocations
         } catch (error) {
@@ -244,7 +246,7 @@ export class BudgetApi {
     
     async getBudgetsBalances() {
         try {
-            const response = await fetch('http://localhost:8787/api/budgetsbalances')
+            const response = await fetch(this.API_HOST + '/api/budgetsbalances')
             const res = await response.json()
             const data = res.data
             
@@ -256,7 +258,7 @@ export class BudgetApi {
     
     // async getSnapshotsBy(budget_month: string) {
     //     try {
-    //         const response = await fetch('http://localhost:8787/api/snapshots/month/' + budget_month)
+    //         const response = await fetch(this.API_HOST + '/api/snapshots/month/' + budget_month)
     //         const result = await response.json()
     //         const snapshots = result.snapshots
     //         return snapshots
