@@ -299,7 +299,6 @@ const showToast = (result: boolean, message: string) => {
 }
 
 const allocations = (id: number) => {
-    console.log('Assign Dialog')
     const oDate = new Date(date.value)
     const oMonth = oDate.getMonth() + 1
     const month = oMonth + '-' + oDate.getFullYear()

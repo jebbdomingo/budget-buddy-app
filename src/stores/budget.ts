@@ -163,7 +163,6 @@ export const useBudgetStore = defineStore('budget', () => {
 
         allocations.value.forEach(allocation => {
             if (allocation.budget_month == date && (allocation.budget_debited_id == id || allocation.budget_credited_id == id)) {
-                console.log(allocation)
                 result.push(allocation)
             }
         })
