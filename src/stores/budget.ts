@@ -13,6 +13,7 @@ export const useBudgetStore = defineStore('budget', () => {
     const allocations = ref<Allocation[]>([])
     const snapshots = ref(null)
     const snapshot = ref(null)
+    const readyToAssign = ref(null) // Active ready-to-assign budget
 
     async function initialize() {
         console.log('budget-store.initialize')
@@ -224,6 +225,14 @@ export const useBudgetStore = defineStore('budget', () => {
                     }
                 });
             }
+            
+            // Set the active ready-to-assign value
+            if (snapshot.value) {
+                readyToAssign.value = snapshot.value[0].available
+
+                const result = snapshot.value.filter(val => val.budget_id !== 1)
+                snapshot.value = result
+            }
         }
 
         watchEffect(() => {
@@ -250,7 +259,7 @@ export const useBudgetStore = defineStore('budget', () => {
         localStorage.setItem('snapshots', JSON.stringify(toValue(newValue)))
     }, { deep: true })
 
-    return { budgets, snapshots, snapshot, initialize, getBudget, setBudgets, assign, updateBudget, createBudget, archiveBudget, getBudgetAllocations, regenerateSnapshots, snapshotSelector }
+    return { budgets, snapshots, snapshot, readyToAssign, initialize, getBudget, setBudgets, assign, updateBudget, createBudget, archiveBudget, getBudgetAllocations, regenerateSnapshots, snapshotSelector }
 })
 
 /**
@@ -403,13 +412,19 @@ class SnapshotsOperation {
         
         this.snapshots.value.forEach(row => {
             if (row.month == allocation.month) {
-                const index = this.findIndexById(row.budgets, allocation.to)
-                const cBudget = row.budgets[index]
+                // Debit target budget
+                const dIndex = this.findIndexById(row.budgets, allocation.to)
+                const dBudget = row.budgets[dIndex]
+                dBudget.assigned += allocation.assigned
+                dBudget.available += allocation.assigned
+                row.budgets[dIndex] = dBudget
 
-                cBudget.assigned += allocation.assigned
-                cBudget.available += allocation.assigned
-
-                row.budgets[index] = cBudget
+                // Credit source budget
+                const cIndex = this.findIndexById(row.budgets, allocation.from)
+                const cBudget = row.budgets[cIndex]
+                cBudget.assigned -= allocation.assigned
+                cBudget.available -= allocation.assigned
+                row.budgets[cIndex] = cBudget
             }
         })
 

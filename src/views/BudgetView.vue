@@ -13,18 +13,23 @@
 
                 <DataTable ref="dt" stripedRows :value="store.snapshot">
                     <template #header>
-                        <div class="flex flex-column md:flex-row md:justify-content-between md:align-items-center">
-                            &nbsp;
+                        <div class="flex flex-wrap align-items-center justify-content-between gap-2">
                             <Calendar v-model="date" dateFormat="MM yy" showButtonBar view="month" :manualInput="false" :maxDate="maxDate" showIcon />
+                            <span class="text-xl text-900 font-bold">
+                                <InlineMessage :severity="severity(store.readyToAssign)">
+                                    <div><b>{{ formatCurrency(store.readyToAssign) }}</b></div>
+                                    <div>Ready to Assign</div>
+                                </InlineMessage>
+                            </span>
                         </div>
                     </template>
                     <Column field="title" header="Envelope"></Column>
-                    <Column field="assigned" header="Assigned" headerStyle="width: 7rem; text-align: right" bodyStyle="text-align: right">
+                    <Column field="assigned" header="Assigned" headerStyle="width: 9rem; text-align: right" bodyStyle="text-align: right">
                         <template #body="slotProps">
                             {{ formatCurrency(slotProps.data.assigned) }}
                         </template>
                     </Column>
-                    <Column field="available" header="Available" headerStyle="width: 7rem; text-align: right" bodyStyle="text-align: right">
+                    <Column field="available" header="Available" headerStyle="width: 9rem; text-align: right" bodyStyle="text-align: right">
                         <template #body="slotProps">
                             <Tag :value="formatCurrency(slotProps.data.available)" :severity="severity(slotProps.data.available)"></Tag>
                         </template>
@@ -134,7 +139,7 @@
                                     <div><small>{{ slotProps.data.budget.title }}</small></div>
                                 </template>
                             </Column>
-                            <Column field="amount" headerStyle="width: 7rem; text-align: right" bodyStyle="text-align: right">
+                            <Column field="amount" headerStyle="width: 9rem; text-align: right" bodyStyle="text-align: right">
                                 <template #body="slotProps">
                                     <div :class="transactionColor(slotProps.data.amount)">{{ formatCurrency(slotProps.data.amount) }}</div>
                                     <div><small>{{ slotProps.data.memo }}</small></div>
@@ -244,10 +249,11 @@ const budget = reactive<Budget>({
 const severity = (value) => {
     let severity: string = ''
 
+    
     if (value > 0) {
         severity = 'success'
     } else if (value < 0) {
-        severity = 'danger'
+        severity = 'error'
     } else {
         severity = 'secondary'
     }
@@ -343,8 +349,6 @@ const editTransaction = (txn: Transaction) => {
 
 const assign = (budg: Budget) => {
     const oBudget = {...budg}
-
-    console.log(oBudget)
 
     allocation.from = 1
     allocation.to = oBudget.budget_id

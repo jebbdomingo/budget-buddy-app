@@ -24,6 +24,7 @@ import SelectButton from 'primevue/selectbutton'
 import InputSwitch from 'primevue/inputswitch'
 import Calendar from 'primevue/calendar'
 import Dialog from 'primevue/dialog'
+import InlineMessage from 'primevue/inlinemessage'
 import { useAccountStore } from './stores/account'
 import { useBudgetStore } from './stores/budget'
 
@@ -35,7 +36,8 @@ app.use(createPinia())
 app.use(router)
 app.use(PrimeVue)
 app.use(ToastService)
-app.component('Sidebar', Sidebar);
+app.component('Sidebar', Sidebar)
+app.component('InlineMessage', InlineMessage)
 app.component('InputText', InputText)
 app.component('Button', Button)
 app.component('FloatLabel', FloatLabel)
