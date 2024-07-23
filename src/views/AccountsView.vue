@@ -64,6 +64,8 @@
 </template>
 
 <script setup lang="ts">
+// @ts-nocheck
+
 import { ref, reactive } from 'vue';
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'

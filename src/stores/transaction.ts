@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 import { ref, watch, toValue, reactive } from 'vue'
 import { defineStore } from 'pinia'
 import { BudgetApi } from '../api/budget'

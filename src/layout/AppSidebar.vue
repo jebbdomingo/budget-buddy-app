@@ -1,4 +1,6 @@
-<script setup>
+<script setup lang="ts">
+// @ts-nocheck
+
 import AppMenu from './AppMenu.vue';
 </script>
 

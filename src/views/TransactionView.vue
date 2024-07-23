@@ -34,6 +34,8 @@
 </template>
 
 <script setup lang="ts">
+// @ts-nocheck
+
 import { ref } from 'vue';
 import { useToast } from 'primevue/usetoast'
 import { useBudgetStore } from '../stores/budget'

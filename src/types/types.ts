@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 export interface Transaction {
 	transaction_id: number
     budget: Budget

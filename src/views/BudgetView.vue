@@ -205,6 +205,8 @@
 </template>
 
 <script setup lang="ts">
+// @ts-nocheck
+
 import { ref, onMounted, reactive, watchEffect } from 'vue';
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'

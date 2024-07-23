@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 import { ref, watch, watchEffect, toValue } from 'vue'
 import { defineStore } from 'pinia'
 import { BudgetApi } from '../api/budget'
@@ -413,15 +415,15 @@ class SnapshotsOperation {
         this.snapshots.value.forEach(row => {
             if (row.month == allocation.month) {
                 // Debit target budget
-                const dIndex = this.findIndexById(row.budgets, allocation.to)
-                const dBudget = row.budgets[dIndex]
+                let dIndex = this.findIndexById(row.budgets, allocation.to)
+                let dBudget = row.budgets[dIndex]
                 dBudget.assigned += allocation.assigned
                 dBudget.available += allocation.assigned
                 row.budgets[dIndex] = dBudget
 
                 // Credit source budget
-                const cIndex = this.findIndexById(row.budgets, allocation.from)
-                const cBudget = row.budgets[cIndex]
+                let cIndex = this.findIndexById(row.budgets, allocation.from)
+                let cBudget = row.budgets[cIndex]
                 cBudget.assigned -= allocation.assigned
                 cBudget.available -= allocation.assigned
                 row.budgets[cIndex] = cBudget

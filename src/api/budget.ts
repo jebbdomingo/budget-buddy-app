@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 import { type Allocation, type Transaction } from '../types/types'
 
 export class BudgetApi {

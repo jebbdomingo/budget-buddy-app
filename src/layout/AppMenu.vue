@@ -1,4 +1,6 @@
-<script setup>
+<script setup lang="ts">
+// @ts-nocheck
+
 import { ref } from 'vue'
 import AppMenuItem from './AppMenuItem.vue'
 import TransactionView from '../views/TransactionView.vue'

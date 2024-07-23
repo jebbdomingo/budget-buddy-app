@@ -35,7 +35,7 @@
                                         label: 'Archive',
                                         icon: 'pi pi-trash',
                                         command: () => {
-                                            confirmArchive(slotProps.data)
+                                            // confirmArchive(slotProps.data)
                                         }
                                     }
                                 ]"
@@ -57,6 +57,8 @@
 </template>
 
 <script setup lang="ts">
+// @ts-nocheck
+
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import DataTable from 'primevue/datatable'

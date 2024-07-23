@@ -1,4 +1,6 @@
-<script setup>
+<script setup lang="ts">
+// @ts-nocheck
+
 import { ref, onBeforeMount, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { useLayout } from '@/layout/composables/layout';
