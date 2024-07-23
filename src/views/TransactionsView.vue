@@ -20,7 +20,7 @@
                             <div><small>{{ slotProps.data.budget.title }}</small></div>
                         </template>
                     </Column>
-                    <Column field="amount" headerStyle="width: 7rem; text-align: right" bodyStyle="text-align: right">
+                    <Column field="amount" headerStyle="width: 9rem; text-align: right" bodyStyle="text-align: right">
                         <template #body="slotProps">
                             <div :class="transactionColor(slotProps.data.amount)">{{ formatCurrency(slotProps.data.amount) }}</div>
                             <div><small>{{ slotProps.data.memo }}</small></div>
