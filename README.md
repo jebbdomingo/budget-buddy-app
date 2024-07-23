@@ -29,3 +29,7 @@ Financial activity consists of an Inflow or Outflow of money. Record your daily 
 ### Read to Assign
 
 It's like a general fund where you can store an Inflow transaction temporarily to be allocated to your budget envelopes later on.
+
+### Accounts
+
+These represents the repository of your money, it could be your bank accounts, cash on hand, or e-wallets.
