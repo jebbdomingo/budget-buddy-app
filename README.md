@@ -26,9 +26,9 @@ Flexibility is valuable in the world of finance. In Budget Buddy, you can move m
 
 Financial activity consists of an Inflow or Outflow of money. Record your daily activities whether an income or an expense against a specific envelope to track your spending or goal and see how your budget progress.
 
-### Read to Assign
+### Ready to Assign
 
-It's like a general fund where you can store an Inflow transaction temporarily to be allocated to your budget envelopes later on.
+It's like a general fund where you can store temporarily an Inflow transaction that is readily available to be distributed to your budget envelopes.
 
 ### Accounts
 
