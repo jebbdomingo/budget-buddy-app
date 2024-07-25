@@ -8,6 +8,8 @@ Budget Buddy is created for those who want to be able to budget using envelope-s
 
 ## Fundamental Features
 
+Go ahead and test it here https://budget-buddy-app.pages.dev
+
 Here's the rundown of the essential features.
 
 ### Unlimited Budget Envelopes
