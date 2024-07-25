@@ -14,9 +14,9 @@ Here's the rundown of the essential features.
 
 ### Unlimited Budget Envelopes
 
-You can categorize your budget goals into envelopes, naming each for its specific purposes whether its for an expense or a goal.
+You can categorize your budget goals into envelopes, naming each for its specific purposes whether it's for an expense or a goal.
 
-Each envelope shows your allocated amount for each budget for that particular month. And, yes, you can (and you should) fund your future months' budgets to effectively manage your money. Budget envelopes show your priorities and where your money go.
+Each envelope shows your allocated amount for each budget for that particular month. And, yes, you can (and should) fund your future months' budgets to manage your money effectively. Budget envelopes show your priorities and where your money goes.
 
 A budget envelope also shows your available funds in that category and for that specific month, carrying over the money left in that envelope from the previous months.
 
@@ -28,7 +28,7 @@ A budget envelope also shows your available funds in that category and for that 
 
 ### Budget Movement
 
-Flexibility is valuable in the world of finance. In Budget Buddy, you can move money between envelopes as you see fit. e.g. Grocery envelope needs a boost and you have available money lying in another envelope, you can move the amount needed from that envelope to cover your need in the Grocery.
+Flexibility is valuable in the world of finance. In Budget Buddy, you can move money between envelopes as you see fit. e.g. Grocery envelope needs a boost and you have available money lying in another envelope, you can move the amount required from that envelope to cover your need in the Grocery.
 
 ![Moves](https://github.com/user-attachments/assets/2c0c4428-9a78-42b6-afa1-aabefe5baab3)
 
