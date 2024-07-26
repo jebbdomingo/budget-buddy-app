@@ -18,7 +18,8 @@
                             <span class="text-xl text-900 font-bold">
                                 <InlineMessage :severity="severity(store.readyToAssign)">
                                     <div><b>{{ formatCurrency(store.readyToAssign) }}</b></div>
-                                    <div>Ready to Assign</div>
+                                    <div v-if="store.readyToAssign">Ready to Assign</div>
+                                    <div v-if="!store.readyToAssign">All Money Assigned</div>
                                 </InlineMessage>
                             </span>
                         </div>

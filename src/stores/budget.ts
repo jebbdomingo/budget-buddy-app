@@ -213,16 +213,23 @@ export const useBudgetStore = defineStore('budget', () => {
      */
     function snapshotSelector(date) {
         const selectSnapshot = () => {
+            // Today's date
+            const today = new Date()
+            const current_month = today.getMonth() + 1
+            const current_year = today.getFullYear()
+            const current_budget_month = current_month + '-' + current_year
+
+            // Date selector
             const oDate = new Date(toValue(date))
-            const month = oDate.getMonth() + 1
-            const year = oDate.getFullYear()
-            const budgetMonth = month + '-' + year
+            const selected_month = oDate.getMonth() + 1
+            const selected_year = oDate.getFullYear()
+            const selected_budget_month = selected_month + '-' + selected_year
         
             let result: []
             result = toValue(snapshots)
             if (result) {
                 result.forEach(row => {
-                    if (row.month == budgetMonth) {
+                    if (row.month == selected_budget_month) {
                         snapshot.value = row.budgets
                     }
                 });
@@ -230,8 +237,12 @@ export const useBudgetStore = defineStore('budget', () => {
             
             // Set the active ready-to-assign value
             if (snapshot.value) {
-                readyToAssign.value = snapshot.value[0].available
+                // Ready-to-assign is intended only for the current and future budget months
+                readyToAssign.value = selected_budget_month >= current_budget_month ? snapshot.value[0].available : 0
 
+                // Remove the Ready-to-assign budget envelope from the list of assignable budgets
+                // Ready-to-assign is a special envelope for containing an inflow transaction
+                // that will be assigned to differenct budget envelopes on a later date
                 const result = snapshot.value.filter(val => val.budget_id !== 1)
                 snapshot.value = result
             }
