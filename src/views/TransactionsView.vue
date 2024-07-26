@@ -1,11 +1,11 @@
 <template>
 
     <div class="grid">
-        <div class="col-12">
-            <div class="card">
-                <Toolbar class="mb-4">
+        <div class="col-12" style="padding: 0;">
+            <div class="card" style="padding: 1rem;">
+                <Toolbar>
                     <template v-slot:start>
-                        <div class="my-2">
+                        <div>
                             <Button label="Accounts" icon="pi pi-angle-left" class="mr-2" severity="secondary" @click="back()" />
                             <Button label="Transaction" icon="pi pi-plus" class="mr-2" severity="primary" @click="store.transactionDialog = true" />
                         </div>

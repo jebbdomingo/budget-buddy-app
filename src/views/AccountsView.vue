@@ -1,12 +1,12 @@
 <template>
 
     <div class="grid">
-        <div class="col-12">
-            <div class="card">
-                <Toolbar class="mb-4">
+        <div class="col-12" style="padding: 0;">
+            <div class="card" style="padding: 1rem;">
+                <Toolbar>
                     <template v-slot:start>
-                        <div class="my-2">
-                            <Button label="Add Account" icon="pi pi-plus" class="mr-2" severity="success" @click="editAccountDialog = true" />
+                        <div>
+                            <Button label="Add Account" icon="pi pi-plus" severity="success" @click="editAccountDialog = true" />
                         </div>
                     </template>
                 </Toolbar>
