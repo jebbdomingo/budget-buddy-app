@@ -14,7 +14,7 @@
                 <DataTable ref="dt" stripedRows :value="store.snapshot">
                     <template #header>
                         <div class="flex flex-wrap align-items-center justify-content-between gap-2">
-                            <Calendar v-model="date" dateFormat="MM yy" showButtonBar view="month" :manualInput="false" :maxDate="maxDate" showIcon />
+                            <Calendar v-model="date" dateFormat="MM yy" showButtonBar view="month" :manualInput="false" :maxDate="maxDate" showIcon touchUI style="width: 12rem;" />
                             <span class="text-xl text-900 font-bold">
                                 <InlineMessage :severity="severity(store.readyToAssign)">
                                     <div><b>{{ formatCurrency(store.readyToAssign) }}</b></div>
