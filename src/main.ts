@@ -11,6 +11,7 @@ import FloatLabel from 'primevue/floatlabel'
 import Toast from 'primevue/toast'
 import ToastService from 'primevue/toastservice'
 import TabMenu from 'primevue/tabmenu'
+import Menu from 'primevue/menu'
 import Toolbar from 'primevue/toolbar'
 import SplitButton from 'primevue/splitbutton'
 import InputIcon from 'primevue/inputicon'
@@ -43,6 +44,7 @@ app.component('Button', Button)
 app.component('FloatLabel', FloatLabel)
 app.component('Toast', Toast)
 app.component('TabMenu', TabMenu)
+app.component('Menu', Menu)
 app.component('Toolbar', Toolbar)
 app.component('SplitButton', SplitButton)
 app.component('InputIcon', InputIcon)

@@ -24,7 +24,11 @@
                             </span>
                         </div>
                     </template>
-                    <Column field="title" header="Envelope"></Column>
+                    <Column field="title" header="Envelope">
+                        <template #body="slotProps">
+                            <a @click="budgetSettings(slotProps.data)">{{ slotProps.data.title }}</a>
+                        </template>
+                    </Column>
                     <Column field="assigned" header="Assigned" headerStyle="width: 9rem; text-align: right" bodyStyle="text-align: right">
                         <template #body="slotProps">
                             {{ formatCurrency(slotProps.data.assigned) }}
@@ -33,43 +37,6 @@
                     <Column field="available" header="Available" headerStyle="width: 9rem; text-align: right" bodyStyle="text-align: right">
                         <template #body="slotProps">
                             <Tag :value="formatCurrency(slotProps.data.available)" :severity="severity(slotProps.data.available)"></Tag>
-                        </template>
-                    </Column>
-                    <Column :exportable="false" style="min-width:8rem" headerStyle="width: 7rem; text-align: right" bodyStyle="text-align: right">
-                        <template #body="slotProps">
-                            <SplitButton
-                                label="Edit" icon="pi pi-check" menuButtonIcon="pi pi-cog" @click="edit(slotProps.data)" severity="secondary"
-                                :model="[
-                                    {
-                                        label: 'Assign',
-                                        icon: 'pi pi-wallet',
-                                        command: () => {
-                                            assign(slotProps.data)
-                                        }
-                                    },
-                                    {
-                                        label: 'Assigned for ' + month,
-                                        icon: 'pi pi-money-bill',
-                                        command: () => {
-                                            allocations(slotProps.data.budget_id)
-                                        }
-                                    },
-                                    {
-                                        label: 'Activities in ' + month,
-                                        icon: 'pi pi-money-bill',
-                                        command: () => {
-                                            activities(slotProps.data.budget_id)
-                                        }
-                                    },
-                                    {
-                                        label: 'Archive',
-                                        icon: 'pi pi-trash',
-                                        command: () => {
-                                            confirmArchive(slotProps.data)
-                                        }
-                                    }
-                                ]"
-                            />
                         </template>
                     </Column>
                 </DataTable>
@@ -201,6 +168,10 @@
                 </div>
             </div>
         </Dialog>
+
+        <Dialog v-model:visible="budgetSettingsDialog" modal :header="selectedBudgetTitle" :style="{ width: '50vw' }" :breakpoints="{ '1199px': '75vw', '575px': '90vw' }">
+            <Menu :model="budgetSettingsItems" />
+        </Dialog>
     </template>
 
 </template>
@@ -228,12 +199,15 @@ const dt = ref(null)
 const today = new Date()
 today.setMonth(today.getMonth() + 2)
 const maxDate = ref(today)
+const selectedBudgetTitle = ref()
+const budgetSettingsItems = ref()
 const budgetDialog = ref(false)
 const assignDialog = ref(false)
 const movesDialog = ref(false)
 const archiveDialog = ref(false)
 const activitiesDialog = ref(false)
 const allocationsDialog = ref(false)
+const budgetSettingsDialog = ref(false)
 const budgetAllocations = ref()
 const activeBudget = ref()
 
@@ -305,6 +279,50 @@ const showToast = (result: boolean, message: string) => {
     } else {
         toast.add({ severity: 'success', summary: 'Operation successful', detail: message, life: 3000 })
     }
+}
+
+const budgetSettings = (data: any) => {
+    selectedBudgetTitle.value = data.title
+
+    budgetSettingsItems.value = [
+        {
+            label: 'Assign',
+            icon: 'pi pi-wallet',
+            command: () => {
+                assign(data)
+            }
+        },
+        {
+            label: 'Assigned for ' + month.value,
+            icon: 'pi pi-dollar',
+            command: () => {
+                allocations(data.budget_id)
+            }
+        },
+        {
+            label: 'Activities in ' + month.value,
+            icon: 'pi pi-credit-card',
+            command: () => {
+                activities(data.budget_id)
+            }
+        },
+        {
+            label: 'Rename Envelope',
+            icon: 'pi pi-pen-to-square',
+            command: () => {
+                edit(data)
+            }
+        },
+        {
+            label: 'Archive',
+            icon: 'pi pi-trash',
+            command: () => {
+                confirmArchive(data)
+            }
+        }
+    ]
+
+    budgetSettingsDialog.value = true
 }
 
 const allocations = (id: number) => {
