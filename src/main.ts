@@ -28,6 +28,7 @@ import Dialog from 'primevue/dialog'
 import InlineMessage from 'primevue/inlinemessage'
 import { useAccountStore } from './stores/account'
 import { useBudgetStore } from './stores/budget'
+import { useTransactionStore } from './stores/transaction'
 
 import '@/assets/styles.scss';
 
@@ -64,5 +65,8 @@ accountStore.initialize()
 // Generate snapshots data structure
 const budgetStore = useBudgetStore()
 budgetStore.initialize()
+
+const transactionStore = useTransactionStore()
+transactionStore.initialize()
 
 app.mount('#app')

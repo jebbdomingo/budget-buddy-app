@@ -87,8 +87,6 @@ export class BudgetApi {
 
     async updateTransaction(transaction: Transaction) {
         try {
-            transaction.budget_id = transaction.budget.budget_id
-
             const options = {
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },

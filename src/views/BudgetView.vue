@@ -99,12 +99,12 @@
             <div class="grid">
                 <div class="col-12">
                     <div class="card">
-                        <DataTable stateStorage="session" stateKey="dt-state-account-transactions-session" ref="dt" stripedRows :value="transactionStore.budgetTransactions" rowGroupMode="subheader" groupRowsBy="transaction_date" :rowClass="rowClass">
+                        <DataTable stateStorage="session" stateKey="dt-state-account-transactions-session" ref="dt" stripedRows :value="budgetTransactions" rowGroupMode="subheader" groupRowsBy="transaction_date" :rowClass="rowClass">
                             <Column field="transaction_date" header="Date"></Column>
                             <Column field="payee">
                                 <template #body="slotProps">
                                     <div>{{ slotProps.data.payee }}</div>
-                                    <div><small>{{ slotProps.data.budget.title }}</small></div>
+                                    <div><small>{{ slotProps.data.budget_title }}</small></div>
                                 </template>
                             </Column>
                             <Column field="amount" headerStyle="width: 9rem; text-align: right" bodyStyle="text-align: right">
@@ -210,6 +210,7 @@ const allocationsDialog = ref(false)
 const budgetSettingsDialog = ref(false)
 const budgetAllocations = ref()
 const activeBudget = ref()
+const budgetTransactions = ref()
 
 const allocationInitialState = {
     from: 0,
@@ -341,7 +342,8 @@ const activities = (id: number) => {
     const oMonth = oDate.getMonth() + 1
     const month = oMonth + '-' + oDate.getFullYear()
 
-    transactionStore.getBudgetTransactions(id, month)
+    budgetTransactions.value = transactionStore.getBudgetTransactions(id, month)
+
     activitiesDialog.value = true
 }
 
@@ -357,6 +359,7 @@ const editTransaction = (txn: Transaction) => {
 
     transactionStore.transaction.transaction_id = oTxn.transaction_id
     transactionStore.transaction.budget = oTxn.budget
+    transactionStore.transaction.budget_id = oTxn.budget_id
     transactionStore.transaction.account_id = oTxn.account_id
     transactionStore.transaction.transaction_type = oTxn.transaction_type
     transactionStore.transaction.transaction_date = oTxn.transaction_date

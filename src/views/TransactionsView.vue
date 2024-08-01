@@ -12,12 +12,12 @@
                     </template>
                 </Toolbar>
 
-                <DataTable stateStorage="session" stateKey="dt-state-account-transactions-session" ref="dt" stripedRows :value="store.accountTransactions" rowGroupMode="subheader" groupRowsBy="transaction_date" :rowClass="rowClass">
+                <DataTable stateStorage="session" stateKey="dt-state-account-transactions-session" ref="dt" stripedRows :value="accountTransactions" rowGroupMode="subheader" groupRowsBy="transaction_date" :rowClass="rowClass" sortField="transaction_date" :sortOrder="-1">
                     <Column field="transaction_date" header="Date"></Column>
                     <Column field="payee">
                         <template #body="slotProps">
                             <div>{{ slotProps.data.payee }}</div>
-                            <div><small>{{ slotProps.data.budget.title }}</small></div>
+                            <div><small>{{ slotProps.data.budget_title }}</small></div>
                         </template>
                     </Column>
                     <Column field="amount" headerStyle="width: 9rem; text-align: right" bodyStyle="text-align: right">
@@ -59,7 +59,7 @@
 <script setup lang="ts">
 // @ts-nocheck
 
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
@@ -71,6 +71,7 @@ const route = useRoute()
 const router = useRouter()
 const dt = ref(null)
 const store = useTransactionStore()
+const accountTransactions = ref()
 
 const rowClass = (data) => {
     return [{ 'bg-blue-50': data.transaction_id }];
@@ -119,12 +120,17 @@ const edit = (txn: Transaction) => {
     store.transactionDialog = true;
 }
 
-onMounted(async() => {
-    store.initialize(route.params.account_id)
+const transactions = (account_id: number) => {
+    accountTransactions.value = store.getAccountTransactions(account_id)
+}
 
-    // watch(transactions.value, (newValue) => {
-    //     console.log('TransactionsView::watch:accounts')
-    //     localStorage.setItem(storageName, JSON.stringify(toValue(newValue)))
-    // })
+watch(store.transactions, (newValue) => {
+    // Store updated transactions in local storage
+    transactions(route.params.account_id)
+    console.log('TransactionsView.watch:transactions')
+}, { deep: true })
+
+onMounted(async() => {
+    transactions(route.params.account_id)
 })
 </script>
