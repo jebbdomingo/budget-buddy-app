@@ -32,6 +32,8 @@ import { useTransactionStore } from './stores/transaction'
 
 import '@/assets/styles.scss';
 
+import './registerServiceWorker' 
+
 const app = createApp(App)
 
 app.use(createPinia())
