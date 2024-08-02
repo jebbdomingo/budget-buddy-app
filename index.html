@@ -3,9 +3,17 @@
   <head>
     <meta charset="UTF-8">
     <link rel="icon" href="/favicon.ico">
+    <link rel="manifest" href="manifest.json">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Budget Buddy</title>
     <link id="theme-css" rel="stylesheet" type="text/css" href="/themes/aura-light-green/theme.css">
+    <script defer="defer">
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/sw.js');
+            });
+        }
+    </script>
   </head>
   <body>
     <div id="app"></div>

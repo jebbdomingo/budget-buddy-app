@@ -4,8 +4,9 @@
   "private": true,
   "scripts": {
     "build": "run-p type-check \"build-only {@}\" --",
+    "build:pwa": "npm run build && workbox generateSW workbox-config.cjs",
     "test:unit": "vitest",
-    "deploy": "npm run build && wrangler pages deploy ./dist",
+    "deploy": "npm run build:pwa && wrangler pages deploy ./dist",
     "build-only": "vite build",
     "dev": "vite",
     "preview": "npm run build && wrangler pages dev ./dist",
