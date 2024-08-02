@@ -9,7 +9,7 @@
     "deploy": "npm run build:pwa && wrangler pages deploy ./dist",
     "build-only": "vite build",
     "dev": "vite",
-    "preview": "npm run build && wrangler pages dev ./dist",
+    "preview": "npm run build:pwa && wrangler pages dev ./dist",
     "type-check": "vue-tsc --build --force"
   },
   "dependencies": {
